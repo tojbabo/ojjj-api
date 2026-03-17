@@ -1,21 +1,23 @@
 // dynamodb.service.ts
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand, BatchWriteCommand } from '@aws-sdk/lib-dynamodb';
 import {logger} from './utils/logger';
 
-const tableName = 'windows-usage-data'
-
 @Injectable()
 export class DynamoDBService {
   private readonly client: DynamoDBDocumentClient;
+  private tableName: string;
 
-  constructor() {
+  constructor(private configService: ConfigService) {
+    this.tableName = this.configService.get<string>("AWS_TABLE_NAME_WINPROCS",'');
+
     const dynamoClient = new DynamoDBClient({
-        region: 'ap-southeast-2',
+        region: this.configService.get<string>("AWS_REGION",''),
         credentials: {
-            accessKeyId: 'AKIA3HBIPAUZDG2TRR4Y',
-            secretAccessKey: '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'
+            accessKeyId: this.configService.get<string>("AWS_ACCESS_KEY_ID",''),
+            secretAccessKey: this.configService.get<string>("AWS_SECRET_ACCESS_KEY",'')
         }
     });
     this.client = DynamoDBDocumentClient.from(dynamoClient);
@@ -23,7 +25,7 @@ export class DynamoDBService {
 
   async putItem(item: Record<string, any>) {
     const command = new PutCommand({
-      TableName: tableName,
+      TableName: this.tableName,
       Item: item,
     });
     return await this.client.send(command);
@@ -44,7 +46,7 @@ export class DynamoDBService {
         return this.client.send(
           new BatchWriteCommand({
             RequestItems:{
-              [tableName]: putRequests,
+              [this.tableName]: putRequests,
             }
           })
         )
