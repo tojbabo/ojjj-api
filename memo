@@ -1,0 +1,39 @@
+-------------------------<commit tag>-------------------------
+
+feat → 새로운 기능
+
+fix → 버그 수정
+
+docs → 문서 변경
+
+style → 코드 포맷/세미콜론/공백 등, 기능 영향 없음
+
+refactor → 리팩토링, 기능 변경 없음
+
+test → 테스트 코드 추가/수정
+
+chore → 빌드, 패키지 매니저 등 잡일
+
+feat(login): add JWT authentication
+fix(api): correct error handling in /users endpoint
+docs(readme): update setup instructions
+--------------------------------------------------------------
+
+--------------------------<git oper>--------------------------
+커밋 생성 (git add . → git commit -m "메시지")
+
+커밋 푸시 (git push origin main)
+
+태그 생성 (git tag backend-v0.1.0)
+
+태그 푸시 (git push origin backend-v0.1.0 또는 git push origin --tags)
+--------------------------------------------------------------
+
+-----------------------<version manage>-----------------------
+
+patch: 0.1.0 → 0.1.1 (버그 수정)
+
+minor: 0.1.0 → 0.2.0 (기능 추가)
+
+major: 0.1.0 → 1.0.0 (호환성 깨지는 큰 변경)
+--------------------------------------------------------------
