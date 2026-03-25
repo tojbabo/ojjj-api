@@ -35,6 +35,7 @@ export class DynamoDBService {
     logger.info(`aws.dynamoDB - data save ${items.length}`);
     const chunksize = 25;
     const chunks: Record<string, any>[] = [];
+
     for (let i = 0 ; i< items.length; i+= chunksize){
       chunks.push(items.slice(i, i+ chunksize));
     }

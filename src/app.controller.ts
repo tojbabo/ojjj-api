@@ -8,7 +8,10 @@ class dto{
   id: string;
   count: number;
   data: {time:string, data:any[]}[];
-
+}
+class dto_idpw{
+  id: string;
+  pw: string;
 }
 
 @Controller('api')
@@ -27,8 +30,15 @@ export class AppController {
 
     const itemlist: Record<string, any>[] = []
     data.forEach(element => {
-      const datatime = element[0];
+      const datatime = Number(element[0]);
       const proclist = element[1];
+
+      if(Number.isNaN(datatime)){
+        logger.warn(`acquire Nan datetime`);
+        logger.warn(proclist);
+      }
+
+
 
       proclist.forEach(p => {
         itemlist.push({
@@ -42,6 +52,17 @@ export class AppController {
     });
 
     await this.dynamoDBService.putItems(itemlist);
+
+    const isSuccess = true;
+    return isSuccess ? 1 : 0;
+  }
+
+  @Post('auth/login')
+  async authlogin(@Body() body: dto_idpw): Promise<number> {
+    logger.info(`api/auth/login - try login`);
+    const {id, pw} = body;
+
+    logger.info(`id: ${id}, pw: ${pw}`);
 
     const isSuccess = true;
     return isSuccess ? 1 : 0;
