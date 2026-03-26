@@ -64,6 +64,12 @@ export class AppController {
 
     logger.info(`id: ${id}, pw: ${pw}`);
 
+    const pwhash = await this.appService.pwHash(id)
+    logger.info(`password hash is: ${pwhash}`);
+
+
+
+
     const isSuccess = true;
     return isSuccess ? 1 : 0;
   }
