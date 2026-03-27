@@ -11,9 +11,12 @@ export class AppService {
   }
   
   async pwHash(pw:string): Promise<string>{
-    const hash = await bcrypt.hash(pw, saltRounds);
-    // const isMatch = await bcrypt.compare(pw, hash);
-    return hash;
+    return await bcrypt.hash(pw, saltRounds);
   }
+
+  async compareHash(pw:string, hash:string): Promise<boolean>{
+    return await bcrypt.compare(pw, hash);
+  }
+
 }
 

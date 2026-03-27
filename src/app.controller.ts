@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { AppService } from './app.service';
 import {DynamoDBService} from './dynamodb.service';
 import {logger} from './utils/logger';
@@ -9,11 +9,6 @@ class dto{
   count: number;
   data: {time:string, data:any[]}[];
 }
-class dto_idpw{
-  id: string;
-  pw: string;
-}
-
 @Controller('api')
 export class AppController {
   constructor(private readonly appService: AppService, private readonly dynamoDBService: DynamoDBService) {}
@@ -52,23 +47,6 @@ export class AppController {
     });
 
     await this.dynamoDBService.putItems(itemlist);
-
-    const isSuccess = true;
-    return isSuccess ? 1 : 0;
-  }
-
-  @Post('auth/login')
-  async authlogin(@Body() body: dto_idpw): Promise<number> {
-    logger.info(`api/auth/login - try login`);
-    const {id, pw} = body;
-
-    logger.info(`id: ${id}, pw: ${pw}`);
-
-    const pwhash = await this.appService.pwHash(id)
-    logger.info(`password hash is: ${pwhash}`);
-
-
-
 
     const isSuccess = true;
     return isSuccess ? 1 : 0;
