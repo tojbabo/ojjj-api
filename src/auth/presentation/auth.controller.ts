@@ -13,15 +13,32 @@ export class AuthController {
   async authlogin(@Body() body: {id:string, pw:string}): Promise<number> {
     logger.info(`api/auth/login - try login`);
     const {id, pw} = body;
-    const pwhash = await this.appService.pwHash(id)
-    logger.info(`pas word hash is: ${pwhash}`);
 
-    await this.dynamoDBService.findUser(id);
-    
-    
+    const user = await this.dynamoDBService.findUser(id);
+    if(user == undefined){
+      return 0
+    }
+    else{
+      const isSuccess = await this.appService.compareHash(pw, user['pw'])
+      return isSuccess ? 1 : 0; 
+    }
 
-    const isSuccess = true;
-    return isSuccess ? 1 : 0;
+  }
+
+  @Post('/join')
+  async authjoin(@Body() body: {id:string, pw:string}): Promise<number> {
+    logger.info(`api/auth/join`);
+    const {id, pw} = body;
+    const pwhash = await this.appService.pwHash(pw)
+    const isSuccess = await this.dynamoDBService.findUser(id);
+
+    if(!isSuccess){
+      await this.dynamoDBService.joinUser(id, pwhash)
+      return 1
+    }
+    else{
+      return 0
+    }
   }
 }
 
