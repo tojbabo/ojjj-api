@@ -1,16 +1,22 @@
-import { Body, Controller,UnauthorizedException, Post } from '@nestjs/common';
+import { Body, Controller, Post, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import { AppService } from '../../app.service';
 import {DynamoDBService} from '../../dynamodb.service';
 import {logger} from '../../utils/logger';
+import { AuthUsecase } from '../application/login.usecase';
 
 
 
 @Controller('api/auth')
 export class AuthController {
-  constructor(private readonly appService: AppService, private readonly dynamoDBService: DynamoDBService) {}
+  constructor(
+    private readonly appService: AppService, 
+    private readonly dynamoDBService: DynamoDBService,
+    private readonly usecase: AuthUsecase
+  ) {}
 
   @Post('/login')
-  async authlogin(@Body() body: {id:string, pw:string}): Promise<number> {
+  async authlogin(@Body() body: {id:string, pw:string}, @Res({passthrough:true}) res: Response): Promise<any> {
     logger.info(`api/auth/login - try login`);
     const {id, pw} = body;
 
@@ -20,13 +26,27 @@ export class AuthController {
     }
     else{
       const isSuccess = await this.appService.compareHash(pw, user['pw'])
-      return isSuccess ? 1 : 0; 
+      const accesstoken = await this.usecase.makeToken(id, 1);
+      const refreshtoken = await this.usecase.makeToken(id, 24*30);
+      res.cookie('refreshToken', refreshtoken, {
+        httpOnly: true,
+        path:"/",
+        secure: false,
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+        // domain: "127.0.0.1"
+      });
+
+      if(!isSuccess) return 0;
+      return {
+        accesstoken
+      };
     }
 
   }
 
   @Post('/join')
-  async authjoin(@Body() body: {id:string, pw:string}): Promise<number> {
+  async authjoin(@Body() body: {id:string, pw:string}, @Res({passthrough:true}) res: Response): Promise<any> {
     logger.info(`api/auth/join`);
     const {id, pw} = body;
     const pwhash = await this.appService.pwHash(pw)
@@ -34,7 +54,23 @@ export class AuthController {
 
     if(!isSuccess){
       await this.dynamoDBService.joinUser(id, pwhash)
-      return 1
+
+      const accesstoken = await this.usecase.makeToken(id, 1);
+      const refreshtoken = await this.usecase.makeToken(id, 24*30);
+
+
+      res.cookie('refreshToken', refreshtoken, {
+        httpOnly: true,
+        path:"/",
+        secure: false,
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+        // domain: "127.0.0.1"
+      });
+
+      return {
+        accesstoken
+      };
     }
     else{
       return 0
