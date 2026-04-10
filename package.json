@@ -1,6 +1,6 @@
 {
   "name": "ojjj-api",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "",
   "author": "",
   "private": true,
@@ -27,6 +27,7 @@
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
     "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
     "jsonwebtoken": "^9.0.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",

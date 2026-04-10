@@ -5,9 +5,9 @@ import {logger} from './utils/logger';
 
 
 class dto{
-  id: string;
-  count: number;
-  data: {time:string, data:any[]}[];
+  'id': string;
+  'count': number;
+  'data': {time:string, data:any[]}[];
 }
 @Controller('api')
 export class AppController {
