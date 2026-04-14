@@ -13,12 +13,14 @@ class dto{
 export class AppController {
   constructor(private readonly appService: AppService, private readonly dynamoDBService: DynamoDBService) {}
 
-  @Get()
+  @Get('/')
   getHello(): string {
+    logger.info("say hello")
     return this.appService.getHello();
   }
 
-  @Post('windows/set')
+
+  @Post('/windows/set')
   async setWindows(@Body() body: dto): Promise<number> {
     logger.info(`api/windows/set - windows proc log save`);
     const {id, count, data} = body;

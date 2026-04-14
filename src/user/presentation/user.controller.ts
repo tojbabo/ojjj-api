@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Res, Req, Get } from '@nestjs/common';
+import { Body, Controller, Post, Res, Req, Get, Headers } from '@nestjs/common';
 import type { Response, Request } from 'express';
 import { AppService } from '../../app.service';
 import {DynamoDBService} from '../../dynamodb.service';
@@ -17,12 +17,27 @@ export class UserController {
   ) {}
 
   @Get('/apilist')
-  async authlogin(): Promise<any> {
+  async reqApiList(): Promise<any> {
     logger.info(`api/user/apilist - request api list`);
 
     return {
       list: APILIST
     }
   }
+
+  @Post('/apilist')
+  async reqApiList_post(@Headers('authorization') auth: string): Promise<any> {
+    logger.info(`api/user/applist<post> - request api list`);
+    const token = auth?.replace('Bearer ', ''); // "Bearer " 제거
+    console.log(token)
+    
+    return {
+      list: APILIST
+    }
+  }
+  
+
+
+
 }
 
