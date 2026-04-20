@@ -29,12 +29,28 @@ export class UserController {
   async reqApiList_post(@Headers('authorization') auth: string): Promise<any> {
     logger.info(`api/user/applist<post> - request api list`);
     const token = auth?.replace('Bearer ', ''); // "Bearer " 제거
-    console.log(token)
+    const userid = await this.usecase.extractID(token);
+
+    logger.info(`request user : ${userid}`)
     
     return {
       list: APILIST
     }
   }
+
+  @Post('/addapi')
+  async addingApi(@Body() body: {id:number}, @Headers('authorization') auth: string): Promise<any> {
+    logger.info(`api/user/addapi - adding api token`);
+    const token = auth?.replace('Bearer ', ''); // "Bearer " 제거
+    console.log(token)
+    this.usecase.extractID(token);
+
+    
+    return {
+      list: APILIST
+    }
+  }
+
   
 
 
