@@ -29,9 +29,9 @@ export class AuthController {
       const isSuccess = await this.appService.compareHash(pw, user['pw'])
       if(!isSuccess) return 0;
 
-      const accesstoken = await this.usecase.makeToken(id, 1);
-      const refreshtoken = await this.usecase.makeToken(id, 24*30);
-      res.cookie('refreshToken', refreshtoken, {
+      const accessToken = await this.usecase.makeToken(id, 1);
+      const refreshToken = await this.usecase.makeToken(id, 24*30);
+      res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         path:"/",
         secure: false,
@@ -40,7 +40,7 @@ export class AuthController {
         // domain: "127.0.0.1"
       });
       return {
-        accesstoken
+        accessToken
       };
     }
   }
@@ -74,11 +74,11 @@ export class AuthController {
     if(!isSuccess){
       await this.dynamoDBService.joinUser(id, pwhash)
 
-      const accesstoken = await this.usecase.makeToken(id, 1);
-      const refreshtoken = await this.usecase.makeToken(id, 24*30);
+      const accessToken = await this.usecase.makeToken(id, 1);
+      const refreshToken = await this.usecase.makeToken(id, 24*30);
 
 
-      res.cookie('refreshToken', refreshtoken, {
+      res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         path:"/",
         secure: false,
@@ -88,7 +88,7 @@ export class AuthController {
       });
 
       return {
-        accesstoken
+        accessToken
       };
     }
     else{
@@ -109,9 +109,9 @@ export class AuthController {
     try {
       const decoded = await this.usecase.verifyToken(refreshToken);
       const userId = decoded.id;
-      const accesstoken = await this.usecase.makeToken(userId, 1);
+      const accessToken = await this.usecase.makeToken(userId, 1);
       return {
-        accesstoken
+        accessToken
       };
     } catch (error) {
       throw new UnauthorizedException('유효하지 않거나 만료된 리프레시 토큰입니다. 다시 로그인해주세요.');

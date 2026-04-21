@@ -99,4 +99,18 @@ export class DynamoDBService {
     else return result.Item
   }
 
+  async requestService(userid: string, serviceid: number, tokenKey: string){
+    const command = new PutCommand({
+      TableName: this.tableName_userinfo,
+      Item: {
+          'id': userid,
+          'sk': serviceid,
+          'ttoken': tokenKey,
+          'time':getTime()
+        },
+    });
+    return await this.client.send(command);
+
+  }
+
 }

@@ -40,7 +40,7 @@ export class AuthUsecase {
 
       return decoded.id;
     } catch (error) {
-      console.log(error);
+      console.log('error is : ',error);
       // 토큰 만료, 변조, 기타 에러 시 401 예외 발생
       throw new UnauthorizedException('유효하지 않은 토큰입니다.');
     }
