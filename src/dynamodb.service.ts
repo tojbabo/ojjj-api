@@ -2,7 +2,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, PutCommand, BatchWriteCommand, GetCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, PutCommand, BatchWriteCommand, GetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import {logger} from './utils/logger';
 
 function getTime() {
@@ -99,18 +99,36 @@ export class DynamoDBService {
     else return result.Item
   }
 
-  async requestService(userid: string, serviceid: number, tokenKey: string){
+  async requestService(userid: string, serviceid: string, tokenKey: string){
     const command = new PutCommand({
       TableName: this.tableName_userinfo,
       Item: {
-          'id': userid,
-          'sk': serviceid,
-          'ttoken': tokenKey,
-          'time':getTime()
+          id: userid,
+          sk: 'service#'+serviceid,
+          token: tokenKey,
+          time:getTime()
         },
     });
     return await this.client.send(command);
 
+  }
+  
+  async getServiceclist(id: string){
+    const command = new QueryCommand({
+      TableName: this.tableName_userinfo,
+      KeyConditionExpression: "id = :id AND begins_with(sk, :prefix)",
+      ExpressionAttributeValues: {
+        ":id": id,
+        ":prefix": "service#"
+      },
+    });
+    
+    const result = await this.client.send(command);
+
+    
+    
+    
+    return result.Items || []
   }
 
 }
