@@ -33,24 +33,19 @@ export class UserController {
     const userid = await this.usecase.extractID(token);
     const items = await this.dynamoDBService.getServiceclist(userid);
     
-    const tokens:{token:string, api:number}[] = []
+    const tokens:{token:string, api:string}[] = []
 
     if (items!.length != 0) {
-      logger.debug("전체 데이터 구조 확인: " + JSON.stringify(items, null, 2));
-
       // 레코드별로 키 이름만 추출해보기
-      items.forEach(item => {
-        const keys = Object.keys(item);
-        logger.debug(`이 레코드의 컬럼들: ${keys.join(', ')}`);
-      });
-      // items!.forEach(element => {
-      //   tokens.push({
-      //     token: element.token,
-      //     api: element.apiid
-      //   });
-      // });
+      items.forEach(item => 
+        // const keys = Object.keys(item);
+        // logger.debug(`이 레코드의 컬럼들: ${keys.join(', ')}`);
+        tokens.push({
+          token: item.token,
+          api: item.sk.replace('service#','')
+        })
+      );
     }
-    // console.log(tokens)
     
     
     return {
