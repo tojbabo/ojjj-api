@@ -59,14 +59,25 @@ export class UserController {
     logger.info(`api/user/addapi - adding api token`);
     const token = auth?.replace('Bearer ', '').trim(); // "Bearer " 제거
     const userid = await this.usecase.extractID(token);
-
+    const serviceid = body.serviceid.toString()
     const tokenkey = crypto.randomBytes(32).toString('hex');
-    await this.dynamoDBService.requestService(userid, body.serviceid.toString(), tokenkey);
-
+    await this.dynamoDBService.requestService(userid, serviceid, tokenkey);
+    logger.info(`make new api token - ${userid} - ${serviceid}`);
 
     return {
       token: tokenkey
     }
   }
-}
 
+  @Post('/releaseapi')
+  async releaseApi(@Body() body: {serviceid:string}, @Headers('authorization') auth: string): Promise<any> {
+    logger.info(`api/user/releaseapi - release api token`);
+    const token = auth?.replace('Bearer ', '').trim(); // "Bearer " 제거
+    const userid = await this.usecase.extractID(token);
+    const serviceid = body.serviceid.toString()
+    const result = await this.dynamoDBService.releaseService(userid, serviceid);
+    logger.info(`api remove - ${userid} - ${serviceid} > ${result}`);
+
+    return result;
+  }
+}
