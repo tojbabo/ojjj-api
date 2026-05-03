@@ -80,4 +80,16 @@ export class UserController {
 
     return result;
   }
+
+  @Post('/winprocs')
+  async apidata_winprocs(@Body() body: {stime:string, etime:string}): Promise<any> {
+    logger.info(`api/user/winprocs<post> - test api data`);
+    const stime = body.stime.toString();
+    const etime = body.etime.toString();
+    console.log (stime,etime);
+
+
+
+    return null;
+  }
 }
