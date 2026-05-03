@@ -2,7 +2,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, PutCommand, BatchWriteCommand, GetCommand, QueryCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, PutCommand, BatchWriteCommand, GetCommand, QueryCommand, DeleteCommand, ScanCommand } from '@aws-sdk/lib-dynamodb';
 import {logger} from './utils/logger';
 
 function getTime() {
@@ -150,36 +150,19 @@ export class DynamoDBService {
     return result.Items || []
   }
 
+  async selectRangeProcs(stime:number, etime:number){
+    const command = new ScanCommand({
+      TableName: this.tableName_winproc,
+      FilterExpression: '#sk BETWEEN :startTime and :endTime',
+      ExpressionAttributeNames:{
+        '#sk': 'time',
+      },
+      ExpressionAttributeValues:{
+      ':startTime': stime,
+      ':endTime': etime,
+      }
+    });
+    const result = await this.client.send(command);
+    return result.Items ?? [];
+  }
 }
-
-
-/**
-try {
-  const result = await this.client.send(command);
-  // 여기 오면 성공
-} catch (error) {
-  // 여기 오면 실패
-  logger.error(error.message);
-}
- **
-const result: GetCommandOutput = await this.client.send(command);
-result.Item        // 실제 데이터 (없으면 undefined)
- **
-const result: QueryCommandOutput = await this.client.send(command);
-result.Items       // 실제 데이터 배열 (없으면 빈 배열 [])
-result.Count       // 조회된 개수
-result.LastEvaluatedKey  // 페이지네이션용 (다음 페이지 있을 때)
-  **
-const result: PutCommandOutput = await this.client.send(command);// 실제 데이터 없음. 예외 없으면 성공
-result.$metadata.httpStatusCode  // 200이면 성공
-  **
-const result: UpdateCommandOutput = await this.client.send(command);
-result.Attributes  // 수정된 데이터 (ReturnValues 옵션 줬을 때만)
-
- **
- const result: DeleteCommandOutput = await this.client.send(command);
-// 실제 데이터 없음. 예외 없으면 성공
-result.Attributes  // 삭제된 데이터 (ReturnValues 옵션 줬을 때만)
-** 
-result.$metadata.httpStatusCode === 200  // 공통으로 다 있음
- */
