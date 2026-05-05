@@ -150,7 +150,7 @@ export class DynamoDBService {
     return result.Items || []
   }
 
-  async selectRangeProcs(stime:number, etime:number){
+  async selectRangeProcs(stime:number, etime:number, size:number):Promise<object[]>{
     const command = new ScanCommand({
       TableName: this.tableName_winproc,
       FilterExpression: '#sk BETWEEN :startTime and :endTime',
@@ -163,6 +163,24 @@ export class DynamoDBService {
       }
     });
     const result = await this.client.send(command);
-    return result.Items ?? [];
+    const items = result.Items ?? [];
+
+    // process-name 별로 그룹화
+    const grouped = items.reduce((acc, item) => {
+      const key = item['process-name'];
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(item);
+      return acc;
+    }, {} as Record<string, any[]>);
+
+    // 그룹별 최신순 정렬 후 N개 제한
+    const result2 = Object.entries(grouped).map(([processName, groupItems]) => ({
+      processName,
+      items: groupItems
+        .sort((a, b) => b.time - a.time)  // 내림차순 (최신이 앞으로)
+        .slice(0, size),
+    }));
+
+    return result2;
   }
 }

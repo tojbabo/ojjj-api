@@ -82,15 +82,20 @@ export class UserController {
   }
 
   @Post('/winprocs')
-  async apidata_winprocs(@Body() body: {stime:string, etime:string}): Promise<any> {
+  async apidata_winprocs(@Body() body: {stime:string, etime:string, size:number}): Promise<any> {
     logger.info(`api/user/winprocs<post> - test api data`);
     const stime = body.stime.toString(); // 20260504-0000
     const etime = body.etime.toString(); // 20260504-2359
-    console.log (stime,etime);
-
-    const data = await this.dynamoDBService.selectRangeProcs(Number.parseInt(stime), Number.parseInt(etime));
+    const size = body.size;
     
-    console.log(data.length);
+    const data = await this.dynamoDBService.selectRangeProcs(Number.parseInt(stime), Number.parseInt(etime), size);
+    
+    data.forEach(element=>{
+      console.log(element['processName'], element['items'].length);
+    })
+
+
+  
     
 
 
