@@ -90,18 +90,6 @@ export class UserController {
     
     const data = await this.dynamoDBService.selectRangeProcs(Number.parseInt(stime), Number.parseInt(etime), size);
     
-    data.forEach(element=>{
-      console.log(element['processName'], element['items'].length);
-    })
-
-
-  
-    
-
-
-
-
-
-    return null;
+    return data;
   }
 }

@@ -175,10 +175,17 @@ export class DynamoDBService {
 
     // 그룹별 최신순 정렬 후 N개 제한
     const result2 = Object.entries(grouped).map(([processName, groupItems]) => ({
-      processName,
-      items: groupItems
+      "pname": processName,
+      "data": groupItems
         .sort((a, b) => b.time - a.time)  // 내림차순 (최신이 앞으로)
-        .slice(0, size),
+        .slice(0, size)
+        .map((item) => ({
+          process: item['process-name'],
+          mem: item.memory,
+          time:item.time,
+          id: item.id,
+          cpu: item.cpu
+        })),
     }));
 
     return result2;
