@@ -6,6 +6,7 @@ import { UserController } from './user/presentation/user.controller';
 import { AppService } from './app.service';
 import { DynamoDBService } from './dynamodb.service';
 import { ConfigModule } from '@nestjs/config';
+import { DynamoDBRepo } from './dynamodb.repo';
 
 @Module({
   imports: [
@@ -14,6 +15,6 @@ import { ConfigModule } from '@nestjs/config';
     })
   ],
   controllers: [AppController, AuthController, UserController],
-  providers: [AppService, DynamoDBService, AuthUsecase],
+  providers: [AppService, DynamoDBService, AuthUsecase, DynamoDBRepo],
 })
 export class AppModule {}

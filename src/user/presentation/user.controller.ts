@@ -1,6 +1,4 @@
-import { Body, Controller, Post, Res, Req, Get, Headers } from '@nestjs/common';
-import type { Response, Request } from 'express';
-import { AppService } from '../../app.service';
+import { Body, Controller, Post, Get, Headers } from '@nestjs/common';
 import {DynamoDBService} from '../../dynamodb.service';
 import {logger} from '../../utils/logger';
 import { AuthUsecase } from '../application/login.usecase';
@@ -12,7 +10,6 @@ import * as crypto from 'crypto';
 @Controller('api/user')
 export class UserController {
   constructor(
-    private readonly appService: AppService, 
     private readonly dynamoDBService: DynamoDBService,
     private readonly usecase: AuthUsecase
   ) {}
@@ -29,8 +26,7 @@ export class UserController {
   @Post('/apilist')
   async reqApiList_post(@Headers('authorization') auth: string): Promise<any> {
     logger.info(`api/user/applist<post> - request api list`);
-    const token = auth?.replace('Bearer ', '').trim(); // "Bearer " 제거
-    const userid = await this.usecase.extractID(token);
+    const userid = await this.usecase.ExtractIDFromToken(auth);
     const items = await this.dynamoDBService.getServiceclist(userid);
     
     const tokens:{token:string, api:string}[] = []
@@ -57,8 +53,7 @@ export class UserController {
   @Post('/addapi')
   async addingApi(@Body() body: {serviceid:string}, @Headers('authorization') auth: string): Promise<any> {
     logger.info(`api/user/addapi - adding api token`);
-    const token = auth?.replace('Bearer ', '').trim(); // "Bearer " 제거
-    const userid = await this.usecase.extractID(token);
+    const userid = await this.usecase.ExtractIDFromToken(auth);
     const serviceid = body.serviceid.toString()
     const tokenkey = crypto.randomBytes(32).toString('hex');
     await this.dynamoDBService.requestService(userid, serviceid, tokenkey);
@@ -72,8 +67,7 @@ export class UserController {
   @Post('/releaseapi')
   async releaseApi(@Body() body: {serviceid:string}, @Headers('authorization') auth: string): Promise<any> {
     logger.info(`api/user/releaseapi - release api token`);
-    const token = auth?.replace('Bearer ', '').trim(); // "Bearer " 제거
-    const userid = await this.usecase.extractID(token);
+    const userid = await this.usecase.ExtractIDFromToken(auth);
     const serviceid = body.serviceid.toString()
     const result = await this.dynamoDBService.releaseService(userid, serviceid);
     logger.info(`api remove - ${userid} - ${serviceid} > ${result}`);
@@ -82,11 +76,14 @@ export class UserController {
   }
 
   @Post('/winprocs')
-  async apidata_winprocs(@Body() body: {stime:string, etime:string, size:number}): Promise<any> {
+  async apidata_winprocs(@Body() body: {/*token: string, */stime:string, etime:string, size:number}): Promise<any> {
     logger.info(`api/user/winprocs<post> - test api data`);
     const stime = body.stime.toString(); // 20260504-0000
     const etime = body.etime.toString(); // 20260504-2359
     const size = body.size;
+    const token = '78d50b7d32e0532428d77b70c1efa56ebb7a331447870a20af81521906ca4131';
+
+    this.usecase.CheckToekn(0, token);
     
     const data = await this.dynamoDBService.selectRangeProcs(Number.parseInt(stime), Number.parseInt(etime), size);
     

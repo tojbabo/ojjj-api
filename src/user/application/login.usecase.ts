@@ -1,8 +1,10 @@
 import * as jwt from 'jsonwebtoken';
-import { UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { DynamoDBRepo } from '../../dynamodb.repo';
 
+@Injectable()
 export class AuthUsecase {
-  constructor(){}
+  constructor(private readonly dbrepo: DynamoDBRepo){}
 
   makeToken(id: string, hour:number) {
     const token = jwt.sign(
@@ -14,19 +16,9 @@ export class AuthUsecase {
     return token;
   }
 
-  async verifyToken(token: string):Promise<any>{
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_KEY!);
-      return decoded;
-    } catch (error:any) {
-      if (error.name === 'TokenExpiredError') {
-        throw new UnauthorizedException('리프레시 토큰이 만료되었습니다. 다시 로그인하세요.');
-      }
-      throw new UnauthorizedException('유효하지 않은 토큰입니다.');
-    }
-  }
-
-  async extractID(token: string): Promise<string> {
+  async ExtractIDFromToken(auth: string): Promise<string> {
+    // const token = auth?.replace('Bearer ', '').trim(); // "Bearer " 제거
+    const token = auth.split(" ")[1];
     try {
       // 1. 토큰 검증
       // process.env.JWT_SECRET은 로그인 시 토큰을 생성할 때 사용한 키와 동일해야 합니다.
@@ -45,5 +37,22 @@ export class AuthUsecase {
       throw new UnauthorizedException('유효하지 않은 토큰입니다.');
     }
   }
+
+  async verifyToken(token: string):Promise<any>{
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_KEY!);
+      return decoded;
+    } catch (error:any) {
+      if (error.name === 'TokenExpiredError') {
+        throw new UnauthorizedException('리프레시 토큰이 만료되었습니다. 다시 로그인하세요.');
+      }
+      throw new UnauthorizedException('유효하지 않은 토큰입니다.');
+    }
+  }
+
+  async CheckToekn(serviceid: number, token:string):Promise<boolean>{
+    return await this.dbrepo.CheckServiceToken(serviceid,token);
+  }
+
 
 }

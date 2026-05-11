@@ -22,7 +22,7 @@ function getTime() {
 }
 
 @Injectable()
-export class DynamoDBService {
+export class DynamoDBRepo {
   private readonly client: DynamoDBDocumentClient;
   private tableName_winproc: string;
   private tableName_userinfo: string;
@@ -191,24 +191,27 @@ export class DynamoDBService {
   }
 
   async CheckServiceToken(serviceid:number, token:string):Promise<boolean>{
-    const sk = `service#${serviceid}`;
     const command = new QueryCommand({
       TableName: this.tableName_userinfo,
-      KeyConditionExpression: 'sk = :sk',
-      FilterExpression: '#token = :token',
+      IndexName: 'with-token-index',
+
+      KeyConditionExpression: 'sk = :sk AND #token = :token',
       ExpressionAttributeNames: {
-        '#token' : 'token',
+        '#token': 'token',
       },
+
       ExpressionAttributeValues: {
-        ':sk' : sk,
+        ':sk' : `service#${serviceid}`,
         ':token' : token,
       },
       Limit: 1,
     });
 
     const result = await this.client.send(command);
+    console.log(result);
+    console.log((result.Items?.length ?? 0) > 0);
 
-    return (result.Items?.length ?? 0) > 0;;
+    return (result.Items?.length ?? 0) > 0;
     
   }
 }
