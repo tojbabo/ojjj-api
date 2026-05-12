@@ -208,10 +208,6 @@ export class DynamoDBRepo {
     });
 
     const result = await this.client.send(command);
-    console.log(result);
-    console.log((result.Items?.length ?? 0) > 0);
-
     return (result.Items?.length ?? 0) > 0;
-    
   }
 }
