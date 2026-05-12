@@ -1,4 +1,4 @@
-// dynamodb.service.ts
+// dynamodb.repo.ts
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';

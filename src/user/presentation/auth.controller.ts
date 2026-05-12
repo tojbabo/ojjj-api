@@ -1,10 +1,10 @@
 import { Body, Controller, Post, Res, Req } from '@nestjs/common';
 import type { Response, Request } from 'express';
 import { AppService } from '../../app.service';
-import {DynamoDBService} from '../../dynamodb.service';
 import {logger} from '../../utils/logger';
 import { AuthUsecase } from '../application/login.usecase';
 import { UnauthorizedException } from '@nestjs/common';
+import { DynamoDBRepo } from '../../dynamodb.repo';
 
 
 
@@ -12,7 +12,7 @@ import { UnauthorizedException } from '@nestjs/common';
 export class AuthController {
   constructor(
     private readonly appService: AppService, 
-    private readonly dynamoDBService: DynamoDBService,
+    private readonly dbrepo: DynamoDBRepo,
     private readonly usecase: AuthUsecase
   ) {}
 
@@ -21,7 +21,7 @@ export class AuthController {
     logger.info(`api/auth/login - try login`);
     const {id, pw} = body;
 
-    const user = await this.dynamoDBService.findUser(id);
+    const user = await this.dbrepo.findUser(id);
     if(user == undefined){
       return 0
     }
@@ -69,10 +69,10 @@ export class AuthController {
     logger.info(`api/auth/join`);
     const {id, pw} = body;
     const pwhash = await this.appService.pwHash(pw)
-    const isSuccess = await this.dynamoDBService.findUser(id);
+    const isSuccess = await this.dbrepo.findUser(id);
 
     if(!isSuccess){
-      await this.dynamoDBService.joinUser(id, pwhash)
+      await this.dbrepo.joinUser(id, pwhash)
 
       const accessToken = await this.usecase.makeToken(id, 1);
       const refreshToken = await this.usecase.makeToken(id, 24*30);

@@ -1,12 +1,11 @@
 import { Body, Controller, Post, Get, Headers, UnauthorizedException, BadRequestException } from '@nestjs/common';
-import {DynamoDBService} from '../../dynamodb.service';
 import {logger} from '../../utils/logger';
 import { AuthUsecase } from '../application/login.usecase';
 import { APILIST }  from '../constants';
 
 import * as crypto from 'crypto';
-import { CheckTimeParam } from '../../utils/tools';
 import { UserUsecase } from '../application/user.usecase';
+import { DynamoDBRepo } from '../../dynamodb.repo';
 
 
 // throw new BadRequestException('잘못된 요청')       // 400
@@ -19,7 +18,7 @@ import { UserUsecase } from '../application/user.usecase';
 @Controller('api/user')
 export class UserController {
   constructor(
-    private readonly dynamoDBService: DynamoDBService,
+    private readonly dbrepo: DynamoDBRepo,
     private readonly authService: AuthUsecase,
     private readonly userService: UserUsecase
   ) {}
@@ -37,7 +36,7 @@ export class UserController {
   async reqApiList_post(@Headers('authorization') auth: string): Promise<any> {
     logger.info(`api/user/applist<post> - request api list`);
     const userid = await this.authService.ExtractIDFromToken(auth);
-    const items = await this.dynamoDBService.getServiceclist(userid);
+    const items = await this.dbrepo.getServiceclist(userid);
     
     const tokens:{token:string, api:string}[] = []
 
@@ -66,7 +65,7 @@ export class UserController {
     const userid = await this.authService.ExtractIDFromToken(auth);
     const serviceid = body.serviceid.toString()
     const tokenkey = crypto.randomBytes(32).toString('hex');
-    await this.dynamoDBService.requestService(userid, serviceid, tokenkey);
+    await this.dbrepo.requestService(userid, serviceid, tokenkey);
     logger.info(`make new api token - ${userid} - ${serviceid}`);
 
     return {
@@ -79,7 +78,7 @@ export class UserController {
     logger.info(`api/user/releaseapi - release api token`);
     const userid = await this.authService.ExtractIDFromToken(auth);
     const serviceid = body.serviceid.toString()
-    const result = await this.dynamoDBService.releaseService(userid, serviceid);
+    const result = await this.dbrepo.releaseService(userid, serviceid);
     logger.info(`api remove - ${userid} - ${serviceid} > ${result}`);
 
     return result;
