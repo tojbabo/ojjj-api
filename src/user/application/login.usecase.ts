@@ -49,10 +49,4 @@ export class AuthUsecase {
       throw new UnauthorizedException('유효하지 않은 토큰입니다.');
     }
   }
-
-  async CheckToekn(serviceid: number, token:string):Promise<boolean>{
-    return await this.dbrepo.CheckServiceToken(serviceid,token);
-  }
-
-
 }

@@ -4,7 +4,6 @@ import { AuthUsecase } from '../application/login.usecase';
 import { APILIST }  from '../constants';
 
 import * as crypto from 'crypto';
-import { UserUsecase } from '../application/user.usecase';
 import { DynamoDBRepo } from '../../dynamodb.repo';
 
 
@@ -15,14 +14,17 @@ import { DynamoDBRepo } from '../../dynamodb.repo';
 // throw new InternalServerErrorException('서버 오류') // 500
 
 
-@Controller('api/user')
+@Controller('user')
 export class UserController {
   constructor(
     private readonly dbrepo: DynamoDBRepo,
     private readonly authService: AuthUsecase,
-    private readonly userService: UserUsecase
   ) {}
 
+  /**
+   * API List 요청
+   * @returns 
+   */
   @Get('/apilist')
   async reqApiList(): Promise<any> {
     logger.info(`api/user/apilist - request api list`);
@@ -32,6 +34,11 @@ export class UserController {
     }
   }
 
+  /**
+   * 사용자의 APi Serivce 토큰 리스트 요청
+   * @param auth 
+   * @returns 
+   */
   @Post('/apilist')
   async reqApiList_post(@Headers('authorization') auth: string): Promise<any> {
     logger.info(`api/user/applist<post> - request api list`);
@@ -59,6 +66,12 @@ export class UserController {
     }
   }
 
+  /**
+   * 특정 api service에 대해서 토큰 발행
+   * @param body 
+   * @param auth 
+   * @returns 
+   */
   @Post('/addapi')
   async addingApi(@Body() body: {serviceid:string}, @Headers('authorization') auth: string): Promise<any> {
     logger.info(`api/user/addapi - adding api token`);
@@ -73,6 +86,12 @@ export class UserController {
     }
   }
 
+  /**
+   * 특정 api service에 대해서 토큰 해지
+   * @param body 
+   * @param auth 
+   * @returns 
+   */
   @Post('/releaseapi')
   async releaseApi(@Body() body: {serviceid:string}, @Headers('authorization') auth: string): Promise<any> {
     logger.info(`api/user/releaseapi - release api token`);
@@ -82,16 +101,5 @@ export class UserController {
     logger.info(`api remove - ${userid} - ${serviceid} > ${result}`);
 
     return result;
-  }
-
-  @Post('/winprocs')
-  async apidata_winprocs(@Body() body: {/*token: string, */stime:string, etime:string, size:number}): Promise<any> {
-    logger.info(`api/user/winprocs<post> - test api data`);
-    const stime = body.stime; // 202605040000
-    const etime = body.etime; // 202605042359
-    const size = body.size;
-    const token = '78d50b7d32e0532428d77b70c1efa56ebb7a331447870a20af81521906ca4131';
-    
-    return await this.userService.request_proclist(token, stime, etime, size); 
   }
 }

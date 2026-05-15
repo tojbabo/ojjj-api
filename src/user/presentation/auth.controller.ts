@@ -16,6 +16,12 @@ export class AuthController {
     private readonly usecase: AuthUsecase
   ) {}
 
+  /**
+   * 로그인 요청
+   * @param body 
+   * @param res 
+   * @returns 
+   */
   @Post('/login')
   async authlogin(@Body() body: {id:string, pw:string}, @Res({passthrough:true}) res: Response): Promise<any> {
     logger.info(`api/auth/login - try login`);
@@ -45,6 +51,11 @@ export class AuthController {
     }
   }
 
+  /**
+   * 로그아웃 요청
+   * @param res 
+   * @returns 
+   */
   @Post('/logout')
   async logout(@Res({ passthrough: true }) res: Response): Promise<any> {
     logger.info(`api/auth/logout - user logout`);
@@ -64,6 +75,12 @@ export class AuthController {
     };
   }
 
+  /**
+   * 회원가입 요청
+   * @param body 
+   * @param res 
+   * @returns 
+   */
   @Post('/join')
   async authjoin(@Body() body: {id:string, pw:string}, @Res({passthrough:true}) res: Response): Promise<any> {
     logger.info(`api/auth/join`);
@@ -96,7 +113,11 @@ export class AuthController {
     }
   }
 
-  
+  /**
+   * get accessToken with refreshToken
+   * @param req 
+   * @returns 
+   */
   @Post('/refresh')
   async authcheck(@Req() req: Request): Promise<any> {
     logger.info(`api/auth/refresh - request access token`);
@@ -117,7 +138,5 @@ export class AuthController {
       throw new UnauthorizedException('유효하지 않거나 만료된 리프레시 토큰입니다. 다시 로그인해주세요.');
     }
   }
-
-
 }
 

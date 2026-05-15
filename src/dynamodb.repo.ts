@@ -190,7 +190,7 @@ export class DynamoDBRepo {
     return result2;
   }
 
-  async CheckServiceToken(serviceid:number, token:string):Promise<boolean>{
+  async CheckServiceToken(serviceid:number, token:string):Promise<string|undefined>{
     const command = new QueryCommand({
       TableName: this.tableName_userinfo,
       IndexName: 'with-token-index',
@@ -208,6 +208,6 @@ export class DynamoDBRepo {
     });
 
     const result = await this.client.send(command);
-    return (result.Items?.length ?? 0) > 0;
+    return result.Items?.[0]['id'];
   }
 }
