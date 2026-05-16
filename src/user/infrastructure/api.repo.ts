@@ -1,8 +1,11 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import {logger} from '../../utils/logger';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ConfigService } from '@nestjs/config';
 
 interface UsageKey {
   userId: string;
@@ -21,6 +24,11 @@ type UsageBuffer = Map<string, number>;
 export class ApiRepo implements OnModuleInit, OnModuleDestroy {
   private readonly TEMP_FILE_PATH = path.join(process.cwd(), 'temp', 'api_usage.json');
   private readonly FLUSH_INTERVAL_MS = 10 * 60 * 1000; // 10분
+  private readonly TABLE_NAME = 'API_USAGE_TABLE_NAME';
+  private readonly REGION = 'AP_NORTHEAST_2';
+  private readonly DB_FLUSH_INTERVAL_MS = 60 * 60 * 1000; // 1시간
+  private readonly client: DynamoDBDocumentClient;
+  private dbFlushTimer: NodeJS.Timeout | null = null;
 
   private buffer: UsageBuffer = new Map();
   private flushTimer: NodeJS.Timeout | null = null;
@@ -29,15 +37,27 @@ export class ApiRepo implements OnModuleInit, OnModuleDestroy {
   // lifecycle
   // ----------------------------------------------------------------
 
+  constructor(private configService: ConfigService){
+    const dynamoClient = new DynamoDBClient({
+        region: this.configService.get<string>("AWS_REGION",''),
+        credentials: {
+            accessKeyId: this.configService.get<string>("AWS_ACCESS_KEY_ID",''),
+            secretAccessKey: this.configService.get<string>("AWS_SECRET_ACCESS_KEY",'')
+        }
+    });
+    this.client = DynamoDBDocumentClient.from(dynamoClient);
+  }
+
   onModuleInit() {
     this.recoverFromFile();
     this.startFlushTimer();
+    this.startDbFlushTimer(); // 추가
+    
   }
 
   onModuleDestroy() {
-    if (this.flushTimer) {
-      clearInterval(this.flushTimer);
-    }
+    if (this.flushTimer) clearInterval(this.flushTimer);
+    if (this.dbFlushTimer) clearInterval(this.dbFlushTimer); // 추가
   }
 
   // ----------------------------------------------------------------
@@ -110,7 +130,7 @@ export class ApiRepo implements OnModuleInit, OnModuleDestroy {
   }
  
   /** 버퍼 → 임시 파일 저장 */
-  private saveToFile(): void {
+  public async saveToFile(): Promise<void>{
     if (this.buffer.size === 0) return;
  
     try {
@@ -148,5 +168,37 @@ export class ApiRepo implements OnModuleInit, OnModuleDestroy {
     this.flushTimer = setInterval(() => {
       this.saveToFile();
     }, this.FLUSH_INTERVAL_MS);
+  }
+  public async flushToDb(): Promise<void> {
+  const snapshot = this.getSnapshot();
+  if (snapshot.length === 0) return;
+
+    try {
+      await Promise.all(snapshot.map((r) => this.upsertRecord(r)));
+      this.clearAfterFlush();
+      logger.info(`DB flush 완료 (${snapshot.length}건)`);
+    } catch (err) {
+      logger.error('DB flush 실패 — 다음 주기에 재시도합니다', err);
+    }
+  }
+
+  private async upsertRecord(record: UsageRecord): Promise<void> {
+    const command = new UpdateCommand({
+      TableName: this.TABLE_NAME,
+      Key: {
+        userId: record.userId,
+        sk: `${record.slot}:${record.serviceId}`,
+      },
+      UpdateExpression: 'ADD #count :count',
+      ExpressionAttributeNames: { '#count': 'count' },
+      ExpressionAttributeValues: { ':count': record.count },
+    });
+    await this.client.send(command);
+  }
+
+  private startDbFlushTimer(): void {
+    this.dbFlushTimer = setInterval(() => {
+      void this.flushToDb();
+    }, this.DB_FLUSH_INTERVAL_MS);
   }
 }

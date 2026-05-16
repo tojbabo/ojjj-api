@@ -8,7 +8,7 @@ import { DynamoDBRepo } from '../../dynamodb.repo';
 
 
 
-@Controller('api/auth')
+@Controller('auth')
 export class AuthController {
   constructor(
     private readonly appService: AppService, 
