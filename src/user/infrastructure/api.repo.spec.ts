@@ -25,7 +25,7 @@ describe('ApiRepo', () => {
     repo.increment('user1', 1);
     repo.increment('user2', 2);
 
-    const snapshot = repo.getSnapshot();
+    const snapshot = repo.getBuffer();
 
     expect(snapshot.find(r => r.userId === 'user1')?.count).toBe(2);
     expect(snapshot.find(r => r.userId === 'user2')?.count).toBe(1);
@@ -33,7 +33,7 @@ describe('ApiRepo', () => {
 
   it('파일 저장 확인', async () => {
     repo.increment('user1', 1);
-    await repo.saveToFile(); // private → public 임시 변경 필요
+    await repo.flushToFile(); // private → public 임시 변경 필요
 
     // temp/api_usage.json 생성됐는지 확인
     const fs = require('fs');
@@ -44,7 +44,7 @@ describe('ApiRepo', () => {
     repo.increment('user1', 1);
     repo.increment('user2', 2);
 
-    await repo.flushToDb(); // private → public 임시 변경 필요
+    await repo.flushToDB(); // private → public 임시 변경 필요
     // DynamoDB 실제 호출됨 — AWS 콘솔에서 확인
   });
 });

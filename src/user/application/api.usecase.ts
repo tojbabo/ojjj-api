@@ -16,7 +16,7 @@ export class ApiUsecase {
   }
  
   getUsageSnapshot() {
-    return this.apiRepo.getSnapshot();
+    return this.apiRepo.getBuffer();
   }
 }
  

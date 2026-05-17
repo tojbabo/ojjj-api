@@ -10,7 +10,7 @@ import { ConfigService } from '@nestjs/config';
 interface UsageKey {
   userId: string;
   serviceId: number;
-  slot:string;
+  time:string;
 }
 
 export interface UsageRecord extends UsageKey{
@@ -23,20 +23,17 @@ type UsageBuffer = Map<string, number>;
 @Injectable()
 export class ApiRepo implements OnModuleInit, OnModuleDestroy {
   private readonly TEMP_FILE_PATH = path.join(process.cwd(), 'temp', 'api_usage.json');
-  private readonly FLUSH_INTERVAL_MS = 10 * 60 * 1000; // 10분
-  private readonly TABLE_NAME = 'usage-api-service';
-  private readonly DB_FLUSH_INTERVAL_MS = 60 * 60 * 1000; // 1시간
+  private readonly INTERVAL_FLUSH_LOCAL = 10 * 60 * 1000; // 10분
+  private readonly INTERVAL_FLUSH_DB = 60 * 60 * 1000; // 1시간
+  private readonly table_name_usage:string;
   private readonly client: DynamoDBDocumentClient;
   private dbFlushTimer: NodeJS.Timeout | null = null;
 
   private buffer: UsageBuffer = new Map();
   private flushTimer: NodeJS.Timeout | null = null;
 
-  // ----------------------------------------------------------------
-  // lifecycle
-  // ----------------------------------------------------------------
-
   constructor(private configService: ConfigService){
+    this.table_name_usage = this.configService.get<string>("AWS_TABLE_NAME_USERUSAGE",'');
     const dynamoClient = new DynamoDBClient({
         region: this.configService.get<string>("AWS_REGION",''),
         credentials: {
@@ -49,8 +46,8 @@ export class ApiRepo implements OnModuleInit, OnModuleDestroy {
 
   onModuleInit() {
     // this.recoverFromFile();
-    this.startFlushTimer();
-    this.startDbFlushTimer(); // 추가
+    this.timerFlushToFile();
+    this.timerFlushToDB(); // 추가
   }
 
   onModuleDestroy() {
@@ -58,26 +55,22 @@ export class ApiRepo implements OnModuleInit, OnModuleDestroy {
     if (this.dbFlushTimer) clearInterval(this.dbFlushTimer); // 추가
   }
 
-  // ----------------------------------------------------------------
-  // public
-  // ----------------------------------------------------------------
-
   /** winprocs 등 api 요청마다 호출 */
- increment(userId: string, serviceId: number): void {
-    const key = this.buildKey({ userId, serviceId, slot: this.getCurrentSlot() });
+  increment(userId: string, serviceId: number): void {
+    const key = this.record2String({ userId, serviceId, time: this.getCurrentTime() });
     this.buffer.set(key, (this.buffer.get(key) ?? 0) + 1);
   }
- 
+
   /** 버퍼 전체 스냅샷 반환 - DB flush 시 사용 */
-  getSnapshot(): UsageRecord[] {
+  getBuffer(): UsageRecord[] {
     return Array.from(this.buffer.entries()).map(([key, count]) => ({
-      ...this.parseKey(key),
+      ...this.str2Record(key),
       count,
     }));
   }
  
   /** DB flush 성공 후 호출 — 버퍼 + 파일 정리 */
-  clearAfterFlush(): void {
+  clearBuffer(): void {
     this.buffer.clear();
  
     if (fs.existsSync(this.TEMP_FILE_PATH)) {
@@ -89,38 +82,27 @@ export class ApiRepo implements OnModuleInit, OnModuleDestroy {
       }
     }
   }
- 
-  // ----------------------------------------------------------------
-  // private - 5분 슬롯
-  // ----------------------------------------------------------------
- 
+  
   /** 현재 시각을 5분 단위로 내림 ex) 10:07 → "2024-01-15T10:05" */
-  private getCurrentSlot(): string {
+  private getCurrentTime(): string {
     const now = new Date();
     now.setSeconds(0, 0);
     now.setMinutes(Math.floor(now.getMinutes() / 5) * 5);
     const pad = (n: number) => String(n).padStart(2, '0');
     return `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}`;
   }
- 
-  // ----------------------------------------------------------------
-  // private - 키 직렬화
-  // ----------------------------------------------------------------
- 
-  private buildKey({ userId, serviceId, slot }: UsageKey): string {
+  
+  private record2String({ userId, serviceId, time: slot }: UsageKey): string {
     return `${userId}:${serviceId}:${slot}`;
   }
  
-  private parseKey(key: string): UsageKey {
+  private str2Record(key: string): UsageKey {
     const [userId, serviceId, slot] = key.split(':');
-    return { userId, serviceId: Number(serviceId), slot };
+    return { userId, serviceId: Number(serviceId), time: slot };
   }
  
-  // ----------------------------------------------------------------
-  // private - 파일
-  // ----------------------------------------------------------------
  
-  private ensureTempDir(): void {
+  private ensureFilePath(): void {
     const dir = path.dirname(this.TEMP_FILE_PATH);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
@@ -128,11 +110,11 @@ export class ApiRepo implements OnModuleInit, OnModuleDestroy {
   }
  
   /** 버퍼 → 임시 파일 저장 */
-  public async saveToFile(): Promise<void>{
+  public async flushToFile(): Promise<void>{
     if (this.buffer.size === 0) return;
  
     try {
-      this.ensureTempDir();
+      this.ensureFilePath();
       const payload = {
         savedAt: new Date().toISOString(),
         data: Object.fromEntries(this.buffer), // Map → plain object
@@ -145,9 +127,7 @@ export class ApiRepo implements OnModuleInit, OnModuleDestroy {
   }
  
   
-  /**
-   * 임시 파일을 읽어서 buffer에 저장
-   */
+  /** 임시 파일을 읽어서 buffer에 저장 */
   public recoverFromFile(): void {
     if (!fs.existsSync(this.TEMP_FILE_PATH)) return;
  
@@ -161,14 +141,10 @@ export class ApiRepo implements OnModuleInit, OnModuleDestroy {
     }
   }
  
-  // ----------------------------------------------------------------
-  // private - 타이머
-  // ----------------------------------------------------------------
- 
-  private startFlushTimer(): void {
+  private timerFlushToFile(): void {
     this.flushTimer = setInterval(() => {
-      this.saveToFile();
-    }, this.FLUSH_INTERVAL_MS);
+      this.flushToFile();
+    }, this.INTERVAL_FLUSH_LOCAL);
   }
 
 
@@ -176,13 +152,13 @@ export class ApiRepo implements OnModuleInit, OnModuleDestroy {
    * save data to Database
    * @returns 
    */
-  public async flushToDb(): Promise<void> {
-  const snapshot = this.getSnapshot();
+  public async flushToDB(): Promise<void> {
+  const snapshot = this.getBuffer();
   if (snapshot.length === 0) return;
 
     try {
       await Promise.all(snapshot.map((r) => this.upsertRecord(r)));
-      this.clearAfterFlush();
+      this.clearBuffer();
       logger.info(`DB flush 완료 (${snapshot.length}건)`);
     } catch (err) {
       logger.error('DB flush 실패 — 다음 주기에 재시도합니다', err);
@@ -191,10 +167,10 @@ export class ApiRepo implements OnModuleInit, OnModuleDestroy {
 
   private async upsertRecord(record: UsageRecord): Promise<void> {
     const command = new UpdateCommand({
-      TableName: this.TABLE_NAME,
+      TableName: this.table_name_usage,
       Key: {
         id: record.userId,
-        sk: `${record.slot}:${record.serviceId}`,
+        sk: `${record.time}:${record.serviceId}`,
       },
       UpdateExpression: 'ADD #count :count',
       ExpressionAttributeNames: { '#count': 'count' },
@@ -203,9 +179,9 @@ export class ApiRepo implements OnModuleInit, OnModuleDestroy {
     await this.client.send(command);
   }
 
-  private startDbFlushTimer(): void {
+  private timerFlushToDB(): void {
     this.dbFlushTimer = setInterval(() => {
-      void this.flushToDb();
-    }, this.DB_FLUSH_INTERVAL_MS);
+      void this.flushToDB();
+    }, this.INTERVAL_FLUSH_DB);
   }
 }
