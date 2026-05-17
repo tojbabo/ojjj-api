@@ -6,6 +6,7 @@ import { DynamoDBDocumentClient, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import * as fs from 'fs';
 import * as path from 'path';
 import { ConfigService } from '@nestjs/config';
+import { GetNextHour, GetNextTenMin } from '../../utils/tools';
 
 interface UsageKey {
   userId: string;
@@ -24,13 +25,14 @@ type UsageBuffer = Map<string, number>;
 export class ApiRepo implements OnModuleInit, OnModuleDestroy {
   private readonly TEMP_FILE_PATH = path.join(process.cwd(), 'temp', 'api_usage.json');
   private readonly INTERVAL_FLUSH_LOCAL = 10 * 60 * 1000; // 10분
-  private readonly INTERVAL_FLUSH_DB = 60 * 60 * 1000; // 1시간
   private readonly table_name_usage:string;
   private readonly client: DynamoDBDocumentClient;
-  private dbFlushTimer: NodeJS.Timeout | null = null;
-
+  
   private buffer: UsageBuffer = new Map();
-  private flushTimer: NodeJS.Timeout | null = null;
+
+  private flushtimer: NodeJS.Timeout | null = null;
+  private flushdelay: NodeJS.Timeout | null = null;
+  
 
   constructor(private configService: ConfigService){
     this.table_name_usage = this.configService.get<string>("AWS_TABLE_NAME_USERUSAGE",'');
@@ -46,13 +48,12 @@ export class ApiRepo implements OnModuleInit, OnModuleDestroy {
 
   onModuleInit() {
     // this.recoverFromFile();
-    this.timerFlushToFile();
-    this.timerFlushToDB(); // 추가
+    this.startTimer();
   }
 
   onModuleDestroy() {
-    if (this.flushTimer) clearInterval(this.flushTimer);
-    if (this.dbFlushTimer) clearInterval(this.dbFlushTimer); // 추가
+    if (this.flushdelay) clearTimeout(this.flushdelay);
+    if (this.flushtimer) clearInterval(this.flushtimer);
   }
 
   /** winprocs 등 api 요청마다 호출 */
@@ -141,10 +142,16 @@ export class ApiRepo implements OnModuleInit, OnModuleDestroy {
     }
   }
  
-  private timerFlushToFile(): void {
-    this.flushTimer = setInterval(() => {
-      this.flushToFile();
-    }, this.INTERVAL_FLUSH_LOCAL);
+  private startTimer(): void {
+    this.flushdelay = setTimeout(() => {
+      this.flushToFile(); // 첫 정각에 실행
+      if(new Date().getMinutes() === 0 ) this.flushToDB();
+      
+      this.flushtimer = setInterval(() => {
+        this.flushToFile();
+        if(new Date().getMinutes() === 0) this.flushToDB();
+      }, this.INTERVAL_FLUSH_LOCAL); // 이후 10분마다
+    }, GetNextTenMin());
   }
 
 
@@ -177,11 +184,5 @@ export class ApiRepo implements OnModuleInit, OnModuleDestroy {
       ExpressionAttributeValues: { ':count': record.count },
     });
     await this.client.send(command);
-  }
-
-  private timerFlushToDB(): void {
-    this.dbFlushTimer = setInterval(() => {
-      void this.flushToDB();
-    }, this.INTERVAL_FLUSH_DB);
   }
 }

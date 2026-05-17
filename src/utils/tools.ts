@@ -15,3 +15,20 @@ export function CheckTimeParam(time:string):boolean{
 
     return true;
 }
+
+/** 다음 10분 정각까지 남은 ms */
+export function GetNextTenMin(): number {
+  const now = new Date();
+  const next = new Date(now);
+  next.setMinutes(Math.ceil(now.getMinutes() / 10) * 10, 0, 0);
+  if (next <= now) next.setMinutes(next.getMinutes() + 10);
+  return next.getTime() - now.getTime();
+}
+
+/** 다음 정시(00분)까지 남은 ms */
+export function GetNextHour(): number {
+  const now = new Date();
+  const next = new Date(now);
+  next.setHours(now.getHours() + 1, 0, 0, 0);
+  return next.getTime() - now.getTime();
+}
