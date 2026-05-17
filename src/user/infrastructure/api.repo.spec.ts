@@ -1,21 +1,15 @@
 // api.repo.spec.ts
 import { Test } from '@nestjs/testing';
 import { ApiRepo } from './api.repo';
-import { ConfigService } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 describe('ApiRepo', () => {
   let repo: ApiRepo;
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({
-      providers: [ApiRepo,
-        {
-            provide: ConfigService,
-            useValue: {
-                get: (key:string) => 'test-value'
-            }
-        }
-      ],
+      imports: [ConfigModule.forRoot()],
+      providers: [ApiRepo],
     }).compile();
 
     repo = module.get(ApiRepo);
@@ -32,7 +26,6 @@ describe('ApiRepo', () => {
     repo.increment('user2', 2);
 
     const snapshot = repo.getSnapshot();
-    console.log('snapshot:', snapshot);
 
     expect(snapshot.find(r => r.userId === 'user1')?.count).toBe(2);
     expect(snapshot.find(r => r.userId === 'user2')?.count).toBe(1);
@@ -45,7 +38,6 @@ describe('ApiRepo', () => {
     // temp/api_usage.json 생성됐는지 확인
     const fs = require('fs');
     expect(fs.existsSync('temp/api_usage.json')).toBe(true);
-    console.log('파일 내용:', fs.readFileSync('temp/api_usage.json', 'utf-8'));
   });
 
   it('DB flush 확인', async () => {

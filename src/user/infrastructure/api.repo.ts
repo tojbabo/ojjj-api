@@ -24,8 +24,7 @@ type UsageBuffer = Map<string, number>;
 export class ApiRepo implements OnModuleInit, OnModuleDestroy {
   private readonly TEMP_FILE_PATH = path.join(process.cwd(), 'temp', 'api_usage.json');
   private readonly FLUSH_INTERVAL_MS = 10 * 60 * 1000; // 10분
-  private readonly TABLE_NAME = 'API_USAGE_TABLE_NAME';
-  private readonly REGION = 'AP_NORTHEAST_2';
+  private readonly TABLE_NAME = 'usage-api-service';
   private readonly DB_FLUSH_INTERVAL_MS = 60 * 60 * 1000; // 1시간
   private readonly client: DynamoDBDocumentClient;
   private dbFlushTimer: NodeJS.Timeout | null = null;
@@ -49,10 +48,9 @@ export class ApiRepo implements OnModuleInit, OnModuleDestroy {
   }
 
   onModuleInit() {
-    this.recoverFromFile();
+    // this.recoverFromFile();
     this.startFlushTimer();
     this.startDbFlushTimer(); // 추가
-    
   }
 
   onModuleDestroy() {
@@ -146,8 +144,11 @@ export class ApiRepo implements OnModuleInit, OnModuleDestroy {
     }
   }
  
-  /** 서버 재시작 시 임시 파일 → 버퍼 복구 */
-  private recoverFromFile(): void {
+  
+  /**
+   * 임시 파일을 읽어서 buffer에 저장
+   */
+  public recoverFromFile(): void {
     if (!fs.existsSync(this.TEMP_FILE_PATH)) return;
  
     try {
@@ -169,6 +170,12 @@ export class ApiRepo implements OnModuleInit, OnModuleDestroy {
       this.saveToFile();
     }, this.FLUSH_INTERVAL_MS);
   }
+
+
+  /**
+   * save data to Database
+   * @returns 
+   */
   public async flushToDb(): Promise<void> {
   const snapshot = this.getSnapshot();
   if (snapshot.length === 0) return;
@@ -186,7 +193,7 @@ export class ApiRepo implements OnModuleInit, OnModuleDestroy {
     const command = new UpdateCommand({
       TableName: this.TABLE_NAME,
       Key: {
-        userId: record.userId,
+        id: record.userId,
         sk: `${record.slot}:${record.serviceId}`,
       },
       UpdateExpression: 'ADD #count :count',
