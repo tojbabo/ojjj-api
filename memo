@@ -31,6 +31,14 @@ docs(readme): update setup instructions
 태그 생성 (git tag backend-v0.1.0)
 
 태그 푸시 (git push origin backend-v0.1.0 또는 git push origin --tags)
+
+branch
+- git branch (확인)
+- git branch A (A 생성)
+- git branch -d A (A 삭제)
+- git push origin --delete feature/A (원격에서 A 삭제)
+- git switch A (A 이동)
+- git merge A (현재에 A 병합)
 --------------------------------------------------------------
 
 -----------------------<version manage>-----------------------
