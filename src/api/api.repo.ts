@@ -1,12 +1,12 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import {logger} from '../../utils/logger';
+import {logger} from '../utils/logger';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 
 import * as fs from 'fs';
 import * as path from 'path';
 import { ConfigService } from '@nestjs/config';
-import { GetNextTenMin } from '../../utils/tools';
+import { GetNextTenMin } from '../utils/tools';
 
 interface UsageKey {
   userId: string;
@@ -14,7 +14,7 @@ interface UsageKey {
   time:string;
 }
 
-interface UsageRecord extends UsageKey{
+export interface UsageRecord extends UsageKey{
   count: number;
 }
 

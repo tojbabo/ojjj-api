@@ -1,10 +1,10 @@
 import { Body, Controller, Post, Res, Req } from '@nestjs/common';
 import type { Response, Request } from 'express';
-import { AppService } from '../../app.service';
-import {logger} from '../../utils/logger';
-import { AuthUsecase } from '../application/login.usecase';
+import { AppService } from '../app.service';
+import {logger} from '../utils/logger';
+import { AuthUsecase } from './login.usecase';
 import { UnauthorizedException } from '@nestjs/common';
-import { DynamoDBRepo } from '../../dynamodb.repo';
+import { DynamoDBRepo } from '../dynamodb.repo';
 
 
 

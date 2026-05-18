@@ -1,10 +1,10 @@
 import { Body, Controller, Post, Get, Headers, UnauthorizedException, BadRequestException } from '@nestjs/common';
-import {logger} from '../../utils/logger';
-import { AuthUsecase } from '../application/login.usecase';
-import { APILIST }  from '../constants';
+import {logger} from '../utils/logger';
+import { AuthUsecase } from '../auth/login.usecase';
+import { APILIST }  from '../auth/constants';
 
 import * as crypto from 'crypto';
-import { DynamoDBRepo } from '../../dynamodb.repo';
+import { DynamoDBRepo } from '../dynamodb.repo';
 
 
 // throw new BadRequestException('잘못된 요청')       // 400
@@ -15,7 +15,7 @@ import { DynamoDBRepo } from '../../dynamodb.repo';
 
 
 @Controller('user')
-export class UserController {
+export class ServiceController {
   constructor(
     private readonly dbrepo: DynamoDBRepo,
     private readonly authService: AuthUsecase,

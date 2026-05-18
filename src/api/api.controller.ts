@@ -1,7 +1,7 @@
 import { Body, Controller, Post, Get, Headers, UnauthorizedException, BadRequestException } from '@nestjs/common';
-import {logger} from '../../utils/logger';
-import { UserUsecase } from '../application/user.usecase';
-import { ApiUsecase } from '../application/api.usecase';
+import {logger} from '../utils/logger';
+import { ServiceUsecase } from '../service/user.usecase';
+import { ApiUsecase } from './api.usecase';
 
 
 // throw new BadRequestException('잘못된 요청')       // 400
@@ -14,7 +14,7 @@ import { ApiUsecase } from '../application/api.usecase';
 @Controller('api')
 export class ApiController {
   constructor(
-    private readonly userService: UserUsecase,
+    private readonly userService: ServiceUsecase,
     private readonly apiService: ApiUsecase
   ) {}
 

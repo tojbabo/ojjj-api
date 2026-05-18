@@ -1,15 +1,15 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
-import { AuthUsecase } from './user/application/login.usecase';
-import { UserUsecase } from './user/application/user.usecase';
-import { AuthController } from './user/presentation/auth.controller';
-import { UserController } from './user/presentation/user.controller';
+import { AuthUsecase } from './auth/login.usecase';
+import { ServiceUsecase } from './service/user.usecase';
+import { AuthController } from './auth/auth.controller';
+import { ServiceController } from './service/service.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { DynamoDBRepo } from './dynamodb.repo';
-import { ApiUsecase } from './user/application/api.usecase';
-import { ApiRepo } from './user/infrastructure/api.repo';
-import { ApiController } from './user/presentation/api.controller';
+import { ApiUsecase } from './api/api.usecase';
+import { ApiRepo } from './api/api.repo';
+import { ApiController } from './api/api.controller';
 
 @Module({
   imports: [
@@ -17,7 +17,7 @@ import { ApiController } from './user/presentation/api.controller';
       isGlobal: true
     })
   ],
-  controllers: [AppController, AuthController, UserController, ApiController],
-  providers: [AppService, AuthUsecase, DynamoDBRepo, UserUsecase, ApiUsecase, ApiRepo],
+  controllers: [AppController, AuthController, ServiceController, ApiController],
+  providers: [AppService, AuthUsecase, DynamoDBRepo, ServiceUsecase, ApiUsecase, ApiRepo],
 })
 export class AppModule {}

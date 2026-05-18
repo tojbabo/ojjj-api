@@ -1,12 +1,12 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
-import { DynamoDBRepo } from '../../dynamodb.repo';
-import { CheckTimeParam } from '../../utils/tools';
+import { DynamoDBRepo } from '../dynamodb.repo';
+import { CheckTimeParam } from '../utils/tools';
 
 
 
 
 @Injectable()
-export class UserUsecase {
+export class ServiceUsecase {
   constructor(private readonly dbrepo: DynamoDBRepo){}
   async request_proclist(token:string, stime:string, etime:string, size:number): Promise<{userid:string, data:any}>{
     if(!(CheckTimeParam(stime) && CheckTimeParam(etime)) ){

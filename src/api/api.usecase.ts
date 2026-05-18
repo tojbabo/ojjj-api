@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ApiRepo } from '../infrastructure/api.repo';
+import { ApiRepo, UsageRecord } from './api.repo';
  
 @Injectable()
 export class ApiUsecase {
@@ -15,7 +15,7 @@ export class ApiUsecase {
     this.apiRepo.increment(userId, serviceId);
   }
  
-  getUsageSnapshot() {
+  getUsageSnapshot():UsageRecord[] {
     return this.apiRepo.getBuffer();
   }
 }

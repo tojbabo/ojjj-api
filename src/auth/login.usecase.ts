@@ -1,6 +1,6 @@
 import * as jwt from 'jsonwebtoken';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { DynamoDBRepo } from '../../dynamodb.repo';
+import { DynamoDBRepo } from '../dynamodb.repo';
 
 @Injectable()
 export class AuthUsecase {

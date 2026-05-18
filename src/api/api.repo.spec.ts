@@ -1,7 +1,7 @@
 // api.repo.spec.ts
 import { Test } from '@nestjs/testing';
 import { ApiRepo } from './api.repo';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 
 describe('ApiRepo', () => {
   let repo: ApiRepo;
