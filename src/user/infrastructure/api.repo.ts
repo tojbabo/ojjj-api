@@ -6,7 +6,7 @@ import { DynamoDBDocumentClient, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import * as fs from 'fs';
 import * as path from 'path';
 import { ConfigService } from '@nestjs/config';
-import { GetNextHour, GetNextTenMin } from '../../utils/tools';
+import { GetNextTenMin } from '../../utils/tools';
 
 interface UsageKey {
   userId: string;
@@ -14,7 +14,7 @@ interface UsageKey {
   time:string;
 }
 
-export interface UsageRecord extends UsageKey{
+interface UsageRecord extends UsageKey{
   count: number;
 }
 
@@ -24,9 +24,9 @@ type UsageBuffer = Map<string, number>;
 @Injectable()
 export class ApiRepo implements OnModuleInit, OnModuleDestroy {
   private readonly TEMP_FILE_PATH = path.join(process.cwd(), 'temp', 'api_usage.json');
-  private readonly INTERVAL_FLUSH_LOCAL = 10 * 60 * 1000; // 10분
-  private readonly table_name_usage:string;
-  private readonly client: DynamoDBDocumentClient;
+  private readonly INTERVAL_FLUSH = 10 * 60 * 1000; // 10분
+  private readonly TABLE:string;
+  private readonly DBCLIENT: DynamoDBDocumentClient;
   
   private buffer: UsageBuffer = new Map();
 
@@ -35,7 +35,7 @@ export class ApiRepo implements OnModuleInit, OnModuleDestroy {
   
 
   constructor(private configService: ConfigService){
-    this.table_name_usage = this.configService.get<string>("AWS_TABLE_NAME_USERUSAGE",'');
+    this.TABLE = this.configService.get<string>("AWS_TABLE_NAME_USERUSAGE",'');
     const dynamoClient = new DynamoDBClient({
         region: this.configService.get<string>("AWS_REGION",''),
         credentials: {
@@ -43,7 +43,7 @@ export class ApiRepo implements OnModuleInit, OnModuleDestroy {
             secretAccessKey: this.configService.get<string>("AWS_SECRET_ACCESS_KEY",'')
         }
     });
-    this.client = DynamoDBDocumentClient.from(dynamoClient);
+    this.DBCLIENT = DynamoDBDocumentClient.from(dynamoClient);
   }
 
   onModuleInit() {
@@ -150,7 +150,7 @@ export class ApiRepo implements OnModuleInit, OnModuleDestroy {
       this.flushtimer = setInterval(() => {
         this.flushToFile();
         if(new Date().getMinutes() === 0) this.flushToDB();
-      }, this.INTERVAL_FLUSH_LOCAL); // 이후 10분마다
+      }, this.INTERVAL_FLUSH); // 이후 10분마다
     }, GetNextTenMin());
   }
 
@@ -160,8 +160,8 @@ export class ApiRepo implements OnModuleInit, OnModuleDestroy {
    * @returns 
    */
   public async flushToDB(): Promise<void> {
-  const snapshot = this.getBuffer();
-  if (snapshot.length === 0) return;
+    const snapshot = this.getBuffer();
+    if (snapshot.length === 0) return;
 
     try {
       await Promise.all(snapshot.map((r) => this.upsertRecord(r)));
@@ -174,7 +174,7 @@ export class ApiRepo implements OnModuleInit, OnModuleDestroy {
 
   private async upsertRecord(record: UsageRecord): Promise<void> {
     const command = new UpdateCommand({
-      TableName: this.table_name_usage,
+      TableName: this.TABLE,
       Key: {
         id: record.userId,
         sk: `${record.time}:${record.serviceId}`,
@@ -183,6 +183,6 @@ export class ApiRepo implements OnModuleInit, OnModuleDestroy {
       ExpressionAttributeNames: { '#count': 'count' },
       ExpressionAttributeValues: { ':count': record.count },
     });
-    await this.client.send(command);
+    await this.DBCLIENT.send(command);
   }
 }
