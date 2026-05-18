@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
-import { AuthUsecase } from './auth/login.usecase';
-import { ServiceUsecase } from './service/user.usecase';
+import { AuthUsecase } from './auth/auth.usecase';
+import { ServiceUsecase } from './service/service.usecase';
 import { AuthController } from './auth/auth.controller';
 import { ServiceController } from './service/service.controller';
 import { AppService } from './app.service';

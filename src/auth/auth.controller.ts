@@ -2,7 +2,7 @@ import { Body, Controller, Post, Res, Req } from '@nestjs/common';
 import type { Response, Request } from 'express';
 import { AppService } from '../app.service';
 import {logger} from '../utils/logger';
-import { AuthUsecase } from './login.usecase';
+import { AuthUsecase } from './auth.usecase';
 import { UnauthorizedException } from '@nestjs/common';
 import { DynamoDBRepo } from '../dynamodb.repo';
 
@@ -27,14 +27,9 @@ export class AuthController {
     logger.info(`api/auth/login - try login`);
     const {id, pw} = body;
 
-    const user = await this.dbrepo.findUser(id);
-    if(user == undefined){
-      return 0
-    }
-    else{
-      const isSuccess = await this.appService.compareHash(pw, user['pw'])
-      if(!isSuccess) return 0;
+    const check = await this.usecase.verifyUserInfo(id, pw);
 
+    if(check){
       const accessToken = await this.usecase.makeToken(id, 1);
       const refreshToken = await this.usecase.makeToken(id, 24*30);
       res.cookie('refreshToken', refreshToken, {
@@ -48,6 +43,10 @@ export class AuthController {
       return {
         accessToken
       };
+
+    }
+    else{
+      throw new UnauthorizedException('로그인 실패')
     }
   }
 

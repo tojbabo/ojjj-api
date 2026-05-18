@@ -47,4 +47,8 @@ describe('ApiRepo', () => {
     await repo.flushToDB(); // private → public 임시 변경 필요
     // DynamoDB 실제 호출됨 — AWS 콘솔에서 확인
   });
+
+  it('사용자 사용량 확인', async()=>{
+    
+  })
 });

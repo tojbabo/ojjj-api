@@ -8,7 +8,7 @@ import { CheckTimeParam } from '../utils/tools';
 @Injectable()
 export class ServiceUsecase {
   constructor(private readonly dbrepo: DynamoDBRepo){}
-  async request_proclist(token:string, stime:string, etime:string, size:number): Promise<{userid:string, data:any}>{
+  async getProcList(token:string, stime:string, etime:string, size:number): Promise<{userid:string, data:any}>{
     if(!(CheckTimeParam(stime) && CheckTimeParam(etime)) ){
         throw new BadRequestException("잘못된 요청");
     }
@@ -21,6 +21,15 @@ export class ServiceUsecase {
 
     const data = await this.dbrepo.selectRangeProcs(Number.parseInt(stime), Number.parseInt(etime), size);
     return {userid, data};
+  }
+
+  async getUsageLiset(id:string,servicecid:number, stime:string, etime:string, size:number): Promise<any>{
+    if(!(CheckTimeParam(stime) && CheckTimeParam(etime)) ){
+        throw new BadRequestException("잘못된 요청");
+    }
+    const data = await this.dbrepo.selectRangeUsage(id, servicecid, Number.parseInt(stime), Number.parseInt(etime), size);
+    return data;
+
   }
   
 }

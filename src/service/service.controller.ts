@@ -1,7 +1,7 @@
-import { Body, Controller, Post, Get, Headers, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Body, Controller, Post, Get, Headers } from '@nestjs/common';
 import {logger} from '../utils/logger';
-import { AuthUsecase } from '../auth/login.usecase';
-import { APILIST }  from '../auth/constants';
+import { AuthUsecase } from '../auth/auth.usecase';
+import { APILIST }  from '../constants';
 
 import * as crypto from 'crypto';
 import { DynamoDBRepo } from '../dynamodb.repo';
@@ -102,4 +102,6 @@ export class ServiceController {
 
     return result;
   }
+
+  
 }

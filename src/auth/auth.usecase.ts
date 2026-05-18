@@ -1,10 +1,33 @@
 import * as jwt from 'jsonwebtoken';
+import * as bcrypt from 'bcrypt';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { DynamoDBRepo } from '../dynamodb.repo';
+import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb';
+import { ConfigService } from '@nestjs/config';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 
 @Injectable()
 export class AuthUsecase {
-  constructor(private readonly dbrepo: DynamoDBRepo){}
+  private readonly client: DynamoDBDocumentClient;
+  private tableName_winproc: string;
+  private tableName_userinfo: string;
+
+  constructor(private configService: ConfigService) {
+    this.tableName_winproc = this.configService.get<string>("AWS_TABLE_NAME_WINPROCS",'');
+    this.tableName_userinfo = this.configService.get<string>("AWS_TABLE_NAME_USERINFO",'');
+
+    const dynamoClient = new DynamoDBClient({
+        region: this.configService.get<string>("AWS_REGION",''),
+        credentials: {
+            accessKeyId: this.configService.get<string>("AWS_ACCESS_KEY_ID",''),
+            secretAccessKey: this.configService.get<string>("AWS_SECRET_ACCESS_KEY",'')
+        }
+    });
+    this.client = DynamoDBDocumentClient.from(dynamoClient);
+  }
+
+  async compareHash(pw:string, hash:string): Promise<boolean>{
+      return await bcrypt.compare(pw, hash);
+  }
 
   makeToken(id: string, hour:number) {
     const token = jwt.sign(
@@ -14,6 +37,29 @@ export class AuthUsecase {
     );
 
     return token;
+  }
+
+  async verifyUserInfo(id:string, pw:string): Promise<boolean>{
+    let flag = false;
+    
+    const command = new GetCommand({
+      TableName: this.tableName_userinfo,
+      Key: {
+        id: id,
+        sk: 'auth'
+      }
+    });
+    
+    const result = await this.client.send(command);
+    
+    if(result.Item != undefined){
+      const user = result.Item;
+
+      const isSuccess = await this.compareHash(pw, user['pw'])
+      if(isSuccess) flag = true;
+      
+    }
+    return flag
   }
 
   async ExtractIDFromToken(auth: string): Promise<string> {
