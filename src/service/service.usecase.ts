@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { DynamoDBRepo } from '../dynamodb.repo';
 import { CheckTimeParam } from '../utils/tools';
+import { APILIST } from '../constants';
 
 
 
@@ -13,7 +14,7 @@ export class ServiceUsecase {
         throw new BadRequestException("잘못된 요청");
     }
 
-    const userid = await this.dbrepo.CheckServiceToken(0,token)
+    const userid = await this.dbrepo.CheckServiceToken(APILIST.WINPROCS.id,token)
 
     if(userid == undefined){
       throw new UnauthorizedException('잘못된 토큰')

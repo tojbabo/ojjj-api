@@ -3,6 +3,7 @@ import { logger } from '../utils/logger';
 import { ServiceUsecase } from '../service/service.usecase';
 import { ApiUsecase } from './api.usecase';
 import { AuthUsecase } from '../auth/auth.usecase';
+import { APILIST } from '../constants';
 
 
 // throw new BadRequestException('잘못된 요청')       // 400
@@ -35,7 +36,7 @@ export class ApiController {
     const token = body.token;
 
     const {userid, data} = await this.serviceService.getProcList(token, stime, etime, size); 
-    await this.apiService.trackRequest(userid, 0);
+    await this.apiService.trackRequest(userid, APILIST.WINPROCS.id);
     return data;
   }
 
@@ -51,7 +52,7 @@ export class ApiController {
     const etime = body.etime; // 202605042359
     const size = body.size;
     const servicecid = body.serviceid;
-    
+
     const check = this.authService.verifyUserInfo(body.id, body.pw);
     if(!check) throw new BadRequestException('잘못된 요청') 
 

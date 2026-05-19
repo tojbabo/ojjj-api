@@ -61,7 +61,6 @@ export class ServiceController {
     
     
     return {
-      list: APILIST,
       tokens: tokens
     }
   }

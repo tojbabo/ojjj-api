@@ -196,7 +196,7 @@ export class DynamoDBRepo {
     const command = new QueryCommand({
       TableName: this.tableName_usage,
       KeyConditionExpression:
-        'userId = :userId AND sk BETWEEN :stime AND :etime',
+        'id = :userId AND sk BETWEEN :stime AND :etime',
       FilterExpression: 'serviceId = :serviceId',
       ExpressionAttributeValues: {
         ':userId': id,

@@ -8,11 +8,9 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 @Injectable()
 export class AuthUsecase {
   private readonly client: DynamoDBDocumentClient;
-  private tableName_winproc: string;
   private tableName_userinfo: string;
 
   constructor(private configService: ConfigService) {
-    this.tableName_winproc = this.configService.get<string>("AWS_TABLE_NAME_WINPROCS",'');
     this.tableName_userinfo = this.configService.get<string>("AWS_TABLE_NAME_USERINFO",'');
 
     const dynamoClient = new DynamoDBClient({
