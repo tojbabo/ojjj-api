@@ -131,6 +131,7 @@ export class AuthController {
       const userId = decoded.id;
       const accessToken = await this.usecase.makeToken(userId, 1);
       return {
+        userId,
         accessToken
       };
     } catch (error) {
