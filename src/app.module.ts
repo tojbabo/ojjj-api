@@ -10,6 +10,7 @@ import { DynamoDBRepo } from './dynamodb.repo';
 import { ApiUsecase } from './api/api.usecase';
 import { ApiRepo } from './api/api.repo';
 import { ApiController } from './api/api.controller';
+import { ServiceRepo } from './service/service.repo';
 
 @Module({
   imports: [
@@ -18,6 +19,9 @@ import { ApiController } from './api/api.controller';
     })
   ],
   controllers: [AppController, AuthController, ServiceController, ApiController],
-  providers: [AppService, AuthUsecase, DynamoDBRepo, ServiceUsecase, ApiUsecase, ApiRepo],
+  providers: [
+    AppService, DynamoDBRepo,
+    AuthUsecase, ServiceUsecase, ApiUsecase,
+    ApiRepo, ServiceRepo],
 })
 export class AppModule {}

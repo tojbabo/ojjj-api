@@ -2,7 +2,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, PutCommand, BatchWriteCommand, GetCommand, QueryCommand, DeleteCommand, ScanCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, PutCommand, QueryCommand, DeleteCommand, ScanCommand } from '@aws-sdk/lib-dynamodb';
 import {logger} from '../utils/logger';
 
 // id, sk , pw, time, token
@@ -41,67 +41,6 @@ export class ServiceRepo {
         }
     });
     this.client = DynamoDBDocumentClient.from(dynamoClient);
-  }
-
-  async putItem(item: Record<string, any>) {
-    const command = new PutCommand({
-      TableName: this.tableName_winproc,
-      Item: item,
-    });
-    return await this.client.send(command);
-  }
-
-  async putItems(items: Record<string, any>[]){
-    logger.info(`aws.dynamoDB - data save ${items.length}`);
-    const chunksize = 25;
-    const chunks: Record<string, any>[] = [];
-
-    for (let i = 0 ; i< items.length; i+= chunksize){
-      chunks.push(items.slice(i, i+ chunksize));
-    }
-    await Promise.all(
-      chunks.map((chunk)=>{
-        const putRequests = chunk.map((item)=>({
-          PutRequest: {Item: item},
-        }));
-        return this.client.send(
-          new BatchWriteCommand({
-            RequestItems:{
-              [this.tableName_winproc]: putRequests,
-            }
-          })
-        )
-      })
-    )
-  }
-
-  async joinUser(id:string, pw:string){
-    const command = new PutCommand({
-      TableName: this.tableName_userinfo,
-      Item: {
-          'id':id,
-          'sk': 'auth',
-          'pw': pw,
-          'time':getTime()
-        },
-    });
-    return await this.client.send(command);
-    
-  }
-
-  async findUser(id: string){
-    const command = new GetCommand({
-      TableName: this.tableName_userinfo,
-      Key: {
-        id: id,
-        sk: 'auth'
-      }
-    });
-    
-    const result = await this.client.send(command);
-    
-    if(result.Item == undefined) return false
-    else return result.Item
   }
 
   async requestService(userid: string, serviceid: string, tokenKey: string){

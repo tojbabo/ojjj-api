@@ -2,7 +2,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, PutCommand, BatchWriteCommand, GetCommand, QueryCommand, DeleteCommand, ScanCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, PutCommand, BatchWriteCommand, GetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import {logger} from './utils/logger';
 
 // id, sk , pw, time, token
@@ -102,77 +102,4 @@ export class DynamoDBRepo {
     else return result.Item
   }
 
-  async requestService(userid: string, serviceid: string, tokenKey: string){
-    const command = new PutCommand({
-      TableName: this.tableName_userinfo,
-      Item: {
-          id: userid,
-          sk: 'service#'+serviceid,
-          token: tokenKey,
-          time:getTime()
-        },
-    });
-    return await this.client.send(command);
-
-  }
-
-  async releaseService(userid: string, serviceid: string): Promise<Boolean> {
-    const command = new DeleteCommand({
-      TableName: this.tableName_userinfo,
-      Key: {
-        id: userid,
-        sk: 'service#' + serviceid,
-      },
-    }); 
-    try{
-      await this.client.send(command);
-      return true;
-
-    }catch(err){
-      logger.debug('delete error - '+err);
-      return false;
-    }
-  }
-
-  async getServiceclist(id: string){
-    const command = new QueryCommand({
-      TableName: this.tableName_userinfo,
-      KeyConditionExpression: "id = :id AND begins_with(sk, :prefix)",
-      ExpressionAttributeValues: {
-        ":id": id,
-        ":prefix": "service#"
-      },
-    });
-    
-    const result = await this.client.send(command);
-    
-    return result.Items || []
-  }
-
-  /**
-   * 토큰이 해당 서비스에서 발급이 됐는지 확인, 발급이 된 경우 소유한 사용자의 ID를 반환
-   * @param serviceid 
-   * @param token 
-   * @returns 해당 토큰의 소유자ID
-   */
-  async CheckServiceToken(serviceid:number, token:string):Promise<string|undefined>{
-    const command = new QueryCommand({
-      TableName: this.tableName_userinfo,
-      IndexName: 'with-token-index',
-
-      KeyConditionExpression: 'sk = :sk AND #token = :token',
-      ExpressionAttributeNames: {
-        '#token': 'token',
-      },
-
-      ExpressionAttributeValues: {
-        ':sk' : `service#${serviceid}`,
-        ':token' : token,
-      },
-      Limit: 1,
-    });
-
-    const result = await this.client.send(command);
-    return result.Items?.[0]['id'];
-  }
 }
