@@ -35,7 +35,7 @@ export class ApiController {
     // const token = '78d50b7d32e0532428d77b70c1efa56ebb7a331447870a20af81521906ca4131';
     const token = body.token;
 
-    const {userid, data} = await this.serviceService.getProcList(token, stime, etime, size); 
+    const {userid, data} = await this.apiService.getProcList(token, stime, etime, size); 
     await this.apiService.trackRequest(userid, APILIST.WINPROCS.id);
     return data;
   }
@@ -56,7 +56,7 @@ export class ApiController {
     const check = this.authService.verifyUserInfo(body.id, body.pw);
     if(!check) throw new BadRequestException('잘못된 요청') 
 
-    const data = await this.serviceService.getUsageLiset(body.id, servicecid, stime, etime, size); 
+    const data = await this.apiService.getUsageLiset(body.id, servicecid, stime, etime, size); 
     return data;
   }
 }

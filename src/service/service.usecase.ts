@@ -1,36 +1,38 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
-import { DynamoDBRepo } from '../dynamodb.repo';
-import { CheckTimeParam } from '../utils/tools';
-import { APILIST } from '../constants';
-
-
+import { Injectable } from '@nestjs/common';
+import { ServiceRepo } from './service.repo';
+import * as crypto from 'crypto';
 
 
 @Injectable()
 export class ServiceUsecase {
-  constructor(private readonly dbrepo: DynamoDBRepo){}
-  async getProcList(token:string, stime:string, etime:string, size:number): Promise<{userid:string, data:any}>{
-    if(!(CheckTimeParam(stime) && CheckTimeParam(etime)) ){
-        throw new BadRequestException("잘못된 요청");
+  constructor(
+    private readonly servrepo: ServiceRepo
+  ){}
+
+  async requestApiStates(userid:string):Promise<any[]>{
+    const items = await this.servrepo.getServiceclist(userid);
+    const tokens:{token:string, api:string}[] = []
+    
+    if (items!.length != 0) {
+      // 레코드별로 키 이름만 추출해보기
+      items.forEach(item => 
+        tokens.push({
+          token: item.token,
+          api: item.sk.replace('service#','')
+        })
+      );
     }
+    return tokens;
 
-    const userid = await this.dbrepo.CheckServiceToken(APILIST.WINPROCS.id,token)
-
-    if(userid == undefined){
-      throw new UnauthorizedException('잘못된 토큰')
-    }
-
-    const data = await this.dbrepo.selectRangeProcs(Number.parseInt(stime), Number.parseInt(etime), size);
-    return {userid, data};
   }
 
-  async getUsageLiset(id:string,servicecid:number, stime:string, etime:string, size:number): Promise<any>{
-    if(!(CheckTimeParam(stime) && CheckTimeParam(etime)) ){
-        throw new BadRequestException("잘못된 요청");
-    }
-    const data = await this.dbrepo.selectRangeUsage(id, servicecid, Number.parseInt(stime), Number.parseInt(etime), size);
-    return data;
-
+  async requestApiService(userid:string, serviceid:string):Promise<string>{
+    const tokenkey = crypto.randomBytes(32).toString('hex');
+    this.servrepo.requestService(userid, serviceid, tokenkey);
+    return tokenkey
   }
-  
+
+  async releaseService(userid:string, serviceid:string):Promise<boolean>{
+    return await this.servrepo.releaseService(userid, serviceid);
+  }
 }

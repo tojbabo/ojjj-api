@@ -2,9 +2,7 @@ import { Body, Controller, Post, Get, Headers } from '@nestjs/common';
 import {logger} from '../utils/logger';
 import { AuthUsecase } from '../auth/auth.usecase';
 import { APILIST }  from '../constants';
-
-import * as crypto from 'crypto';
-import { DynamoDBRepo } from '../dynamodb.repo';
+import { ServiceUsecase } from './service.usecase';
 
 
 // throw new BadRequestException('잘못된 요청')       // 400
@@ -17,8 +15,8 @@ import { DynamoDBRepo } from '../dynamodb.repo';
 @Controller('user')
 export class ServiceController {
   constructor(
-    private readonly dbrepo: DynamoDBRepo,
     private readonly authService: AuthUsecase,
+    private readonly servService: ServiceUsecase
   ) {}
 
   /**
@@ -43,25 +41,10 @@ export class ServiceController {
   async reqApiList_post(@Headers('authorization') auth: string): Promise<any> {
     logger.info(`api/user/applist<post> - request api list`);
     const userid = await this.authService.ExtractIDFromToken(auth);
-    const items = await this.dbrepo.getServiceclist(userid);
-    
-    const tokens:{token:string, api:string}[] = []
+    const tokens = await this.servService.requestApiStates(userid);
 
-    if (items!.length != 0) {
-      // 레코드별로 키 이름만 추출해보기
-      items.forEach(item => 
-        // const keys = Object.keys(item);
-        // logger.debug(`이 레코드의 컬럼들: ${keys.join(', ')}`);
-        tokens.push({
-          token: item.token,
-          api: item.sk.replace('service#','')
-        })
-      );
-    }
-    
-    
     return {
-      tokens: tokens
+      tokens
     }
   }
 
@@ -74,14 +57,15 @@ export class ServiceController {
   @Post('/addapi')
   async addingApi(@Body() body: {serviceid:string}, @Headers('authorization') auth: string): Promise<any> {
     logger.info(`api/user/addapi - adding api token`);
+
     const userid = await this.authService.ExtractIDFromToken(auth);
     const serviceid = body.serviceid.toString()
-    const tokenkey = crypto.randomBytes(32).toString('hex');
-    await this.dbrepo.requestService(userid, serviceid, tokenkey);
+    const token = await this.servService.requestApiService(userid, serviceid);
     logger.info(`make new api token - ${userid} - ${serviceid}`);
 
+
     return {
-      token: tokenkey
+      token
     }
   }
 
@@ -94,10 +78,11 @@ export class ServiceController {
   @Post('/releaseapi')
   async releaseApi(@Body() body: {serviceid:string}, @Headers('authorization') auth: string): Promise<any> {
     logger.info(`api/user/releaseapi - release api token`);
+
     const userid = await this.authService.ExtractIDFromToken(auth);
-    const serviceid = body.serviceid.toString()
-    const result = await this.dbrepo.releaseService(userid, serviceid);
-    logger.info(`api remove - ${userid} - ${serviceid} > ${result}`);
+    const result = await this.servService.releaseService(userid, body.serviceid);
+
+    logger.info(`api remove - ${userid} - ${body.serviceid} > ${result}`);
 
     return result;
   }

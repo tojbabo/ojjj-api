@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand, BatchWriteCommand, GetCommand, QueryCommand, DeleteCommand, ScanCommand } from '@aws-sdk/lib-dynamodb';
-import {logger} from './utils/logger';
+import {logger} from '../utils/logger';
 
 // id, sk , pw, time, token
 // tt@nav, [auth, service#0], '' , 260404-2356 , '423423423'
@@ -22,14 +22,16 @@ function getTime() {
 }
 
 @Injectable()
-export class DynamoDBRepo {
+export class ServiceRepo {
   private readonly client: DynamoDBDocumentClient;
   private tableName_winproc: string;
   private tableName_userinfo: string;
+  private tableName_usage: string;
 
   constructor(private configService: ConfigService) {
     this.tableName_winproc = this.configService.get<string>("AWS_TABLE_NAME_WINPROCS",'');
     this.tableName_userinfo = this.configService.get<string>("AWS_TABLE_NAME_USERINFO",'');
+    this.tableName_usage = this.configService.get<string>("AWS_TABLE_NAME_USERUSAGE",'');
 
     const dynamoClient = new DynamoDBClient({
         region: this.configService.get<string>("AWS_REGION",''),
@@ -116,7 +118,7 @@ export class DynamoDBRepo {
 
   }
 
-  async releaseService(userid: string, serviceid: string): Promise<Boolean> {
+  async releaseService(userid: string, serviceid: string): Promise<boolean> {
     const command = new DeleteCommand({
       TableName: this.tableName_userinfo,
       Key: {
@@ -147,6 +149,65 @@ export class DynamoDBRepo {
     const result = await this.client.send(command);
     
     return result.Items || []
+  }
+
+  async selectRangeProcs(stime:number, etime:number, size:number):Promise<object[]>{
+    const command = new ScanCommand({
+      TableName: this.tableName_winproc,
+      FilterExpression: '#sk BETWEEN :startTime and :endTime',
+      ExpressionAttributeNames:{
+        '#sk': 'time',
+      },
+      ExpressionAttributeValues:{
+      ':startTime': stime,
+      ':endTime': etime,
+      }
+    });
+    const result = await this.client.send(command);
+    const items = result.Items ?? [];
+
+    // process-name 별로 그룹화
+    const grouped = items.reduce((acc, item) => {
+      const key = item['process-name'];
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(item);
+      return acc;
+    }, {} as Record<string, any[]>);
+
+    // 그룹별 최신순 정렬 후 N개 제한
+    const result2 = Object.entries(grouped).map(([processName, groupItems]) => ({
+      "pname": processName,
+      "data": groupItems
+        .sort((a, b) => b.time - a.time)  // 내림차순 (최신이 앞으로)
+        .slice(0, size)
+        .map((item) => ({
+          process: item['process-name'],
+          mem: item.memory,
+          time:item.time,
+          id: item.id,
+          cpu: item.cpu
+        })),
+    }));
+
+    return result2;
+  }
+
+  async selectRangeUsage(id: string, service:number, stime:number, etime:number, size:number):Promise<object[]>{
+    const command = new QueryCommand({
+      TableName: this.tableName_usage,
+      KeyConditionExpression:
+        'id = :userId AND sk BETWEEN :stime AND :etime',
+      FilterExpression: 'serviceId = :serviceId',
+      ExpressionAttributeValues: {
+        ':userId': id,
+        ':stime': `${stime}:${service}`,
+        ':etime': `${etime}:${service}`,
+        ':serviceId': service,
+      },
+    });
+
+    const result = await this.client.send(command);
+    return result.Items ?? [];
   }
 
   /**
