@@ -1,6 +1,5 @@
 import { BadRequestException, Body, Controller, Post } from '@nestjs/common';
 import { logger } from '../utils/logger';
-import { ServiceUsecase } from '../service/service.usecase';
 import { ApiUsecase } from './api.usecase';
 import { AuthUsecase } from '../auth/auth.usecase';
 import { APILIST } from '../constants';
@@ -16,7 +15,6 @@ import { APILIST } from '../constants';
 @Controller('api')
 export class ApiController {
   constructor(
-    private readonly serviceService: ServiceUsecase,
     private readonly apiService: ApiUsecase,
     private readonly authService: AuthUsecase
   ) {}

@@ -1,19 +1,20 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
-import { ApiRepo, UsageRecord } from './api.repo';
+import { ApiRepo } from './api.repo';
 import { CheckTimeParam } from '../utils/tools';
-import { DynamoDBRepo } from '../dynamodb.repo';
 import { APILIST } from '../constants';
 import { ServiceRepo } from '../service/service.repo';
+import { AppScheduler, UsageRecord } from '../app.scheduler';
  
 @Injectable()
 export class ApiUsecase {
   constructor(
+    private readonly scheduler: AppScheduler,
     private readonly apiRepo: ApiRepo,
     private readonly servRepo: ServiceRepo,
   ) {}
 
   onModuleInit(){
-    this.apiRepo.recoverFromFile();
+    this.scheduler.recoverFromFile();
   }
 
   /**
@@ -62,7 +63,7 @@ export class ApiUsecase {
    * @param serviceId 
    */
   trackRequest(userId: string, serviceId: number): void {
-    this.apiRepo.increment(userId, serviceId);
+    this.scheduler.increment(userId, serviceId);
   }
  
   /**
@@ -70,7 +71,7 @@ export class ApiUsecase {
    * @returns 
    */
   getUsageSnapshot():UsageRecord[] {
-    return this.apiRepo.getBuffer();
+    return this.scheduler.getBuffer();
   }
 
 

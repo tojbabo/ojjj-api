@@ -11,6 +11,7 @@ import { ApiUsecase } from './api/api.usecase';
 import { ApiRepo } from './api/api.repo';
 import { ApiController } from './api/api.controller';
 import { ServiceRepo } from './service/service.repo';
+import { AppScheduler } from './app.scheduler';
 
 @Module({
   imports: [
@@ -20,7 +21,7 @@ import { ServiceRepo } from './service/service.repo';
   ],
   controllers: [AppController, AuthController, ServiceController, ApiController],
   providers: [
-    AppService, DynamoDBRepo,
+    AppService, AppScheduler, DynamoDBRepo,
     AuthUsecase, ServiceUsecase, ApiUsecase,
     ApiRepo, ServiceRepo],
 })
