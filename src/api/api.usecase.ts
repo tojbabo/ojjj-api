@@ -3,24 +3,33 @@ import { ApiRepo, UsageRecord } from './api.repo';
 import { CheckTimeParam } from '../utils/tools';
 import { DynamoDBRepo } from '../dynamodb.repo';
 import { APILIST } from '../constants';
+import { ServiceRepo } from '../service/service.repo';
  
 @Injectable()
 export class ApiUsecase {
   constructor(
     private readonly apiRepo: ApiRepo,
-    private readonly dbrepo: DynamoDBRepo
+    private readonly servRepo: ServiceRepo,
   ) {}
 
   onModuleInit(){
     this.apiRepo.recoverFromFile();
   }
 
+  /**
+   * windows 프로세스 사용량 리스트 반환
+   * @param token 
+   * @param stime 
+   * @param etime 
+   * @param size 
+   * @returns 
+   */
   async getProcList(token:string, stime:string, etime:string, size:number): Promise<{userid:string, data:any}>{
     if(!(CheckTimeParam(stime) && CheckTimeParam(etime)) ){
         throw new BadRequestException("잘못된 요청");
     }
 
-    const userid = await this.dbrepo.CheckServiceToken(APILIST.WINPROCS.id,token)
+    const userid = await this.servRepo.CheckServiceToken(APILIST.WINPROCS.id,token)
 
     if(userid == undefined){
       throw new UnauthorizedException('잘못된 토큰')
@@ -30,6 +39,15 @@ export class ApiUsecase {
     return {userid, data};
   }
 
+  /**
+   * 사용자 api 서비스 사용량 리스트 반환
+   * @param id 
+   * @param servicecid 
+   * @param stime 
+   * @param etime 
+   * @param size 
+   * @returns 
+   */
   async getUsageLiset(id:string,servicecid:number, stime:string, etime:string, size:number): Promise<any>{
     if(!(CheckTimeParam(stime) && CheckTimeParam(etime)) ){
         throw new BadRequestException("잘못된 요청");
@@ -38,10 +56,19 @@ export class ApiUsecase {
     return data;
   }
  
+  /**
+   * 사용자의 api 서비스 사용량 카운팅
+   * @param userId 
+   * @param serviceId 
+   */
   trackRequest(userId: string, serviceId: number): void {
     this.apiRepo.increment(userId, serviceId);
   }
  
+  /**
+   * 사용자의 api 서비스 사용량 가져오기
+   * @returns 
+   */
   getUsageSnapshot():UsageRecord[] {
     return this.apiRepo.getBuffer();
   }

@@ -43,6 +43,33 @@ export class ServiceRepo {
     this.client = DynamoDBDocumentClient.from(dynamoClient);
   }
 
+  /**
+   * 사용자가 구독한 모든 api 토큰 목록을 가져옴
+   * @param id 
+   * @returns 
+   */
+  async getServiceclist(id: string){
+    const command = new QueryCommand({
+      TableName: this.tableName_userinfo,
+      KeyConditionExpression: "id = :id AND begins_with(sk, :prefix)",
+      ExpressionAttributeValues: {
+        ":id": id,
+        ":prefix": "service#"
+      },
+    });
+    
+    const result = await this.client.send(command);
+    
+    return result.Items || []
+  }
+
+  /**
+   * 사용자의 해당 서비스에 대한 토큰을 저장
+   * @param userid 
+   * @param serviceid 
+   * @param tokenKey 
+   * @returns 
+   */
   async requestService(userid: string, serviceid: string, tokenKey: string){
     const command = new PutCommand({
       TableName: this.tableName_userinfo,
@@ -57,6 +84,12 @@ export class ServiceRepo {
 
   }
 
+  /**
+   * 사용자의 특정 api 토큰을 삭제
+   * @param userid 
+   * @param serviceid 
+   * @returns 
+   */
   async releaseService(userid: string, serviceid: string): Promise<boolean> {
     const command = new DeleteCommand({
       TableName: this.tableName_userinfo,
@@ -75,21 +108,13 @@ export class ServiceRepo {
     }
   }
 
-  async getServiceclist(id: string){
-    const command = new QueryCommand({
-      TableName: this.tableName_userinfo,
-      KeyConditionExpression: "id = :id AND begins_with(sk, :prefix)",
-      ExpressionAttributeValues: {
-        ":id": id,
-        ":prefix": "service#"
-      },
-    });
-    
-    const result = await this.client.send(command);
-    
-    return result.Items || []
-  }
-
+  /**
+   * start time ~ end time 구간의 size 갯수 만큼의 프로세스 사용량 목록을 가져옴
+   * @param stime 
+   * @param etime 
+   * @param size 
+   * @returns 
+   */
   async selectRangeProcs(stime:number, etime:number, size:number):Promise<object[]>{
     const command = new ScanCommand({
       TableName: this.tableName_winproc,
@@ -131,6 +156,43 @@ export class ServiceRepo {
     return result2;
   }
 
+  async getTotalUsage(userId: string, stime: string, etime: string):Promise<object[]>{
+    const command = new QueryCommand({
+      TableName: 'usage-api-service',
+      KeyConditionExpression: 'id = :userId AND sk BETWEEN :stime AND :etime',
+      ExpressionAttributeValues: {
+        ':userId': userId,
+        ':stime': stime,
+        ':etime': etime,
+      },
+    });
+
+    const result = await this.client.send(command);
+
+    // serviceId별로 그룹핑 + 합산
+    const grouped = (result.Items ?? []).reduce<Record<string, number>>((acc, item) => {
+      const serviceId = item.sk.split(':')[1]; // sk에서 serviceId 추출
+      acc[serviceId] = (acc[serviceId] ?? 0) + item.count;
+      return acc;
+    }, {});
+
+    // 리스트로 변환
+    return Object.entries(grouped).map(([serviceId, count]) => ({
+      serviceId: Number(serviceId),
+      count,
+    }));
+
+  }
+
+  /**
+   * 사용자의 서비스에 대한 사용 목록을 가져옴
+   * @param id 
+   * @param service 
+   * @param stime 
+   * @param etime 
+   * @param size 
+   * @returns 
+   */
   async selectRangeUsage(id: string, service:number, stime:number, etime:number, size:number):Promise<object[]>{
     const command = new QueryCommand({
       TableName: this.tableName_usage,
@@ -148,6 +210,8 @@ export class ServiceRepo {
     const result = await this.client.send(command);
     return result.Items ?? [];
   }
+
+
 
   /**
    * 토큰이 해당 서비스에서 발급이 됐는지 확인, 발급이 된 경우 소유한 사용자의 ID를 반환
