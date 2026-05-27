@@ -97,18 +97,17 @@ export class ApiRepo {
     return result2;
   }
 
-  async selectRangeUsage(id: string, service:number, stime:number, etime:number, size:number):Promise<object[]>{
+  async selectRangeUsage(id: string, service:number, stime:string, etime:string, size:number):Promise<object[]>{
     const command = new QueryCommand({
       TableName: this.TABLE,
-      KeyConditionExpression:
-        'id = :userId AND sk BETWEEN :stime AND :etime',
-      FilterExpression: 'serviceId = :serviceId',
+      KeyConditionExpression: 'id = :userId AND sk BETWEEN :stime AND :etime',
       ExpressionAttributeValues: {
         ':userId': id,
         ':stime': `${stime}:${service}`,
         ':etime': `${etime}:${service}`,
-        ':serviceId': service,
       },
+      // Limit: size,
+      ScanIndexForward: false, // 최신순 정렬
     });
 
     const result = await this.DBCLIENT.send(command);

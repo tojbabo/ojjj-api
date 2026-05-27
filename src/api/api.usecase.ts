@@ -53,7 +53,7 @@ export class ApiUsecase {
     if(!(CheckTimeParam(stime) && CheckTimeParam(etime)) ){
         throw new BadRequestException("잘못된 요청");
     }
-    const data = await this.apiRepo.selectRangeUsage(id, servicecid, Number.parseInt(stime), Number.parseInt(etime), size);
+    const data = await this.apiRepo.selectRangeUsage(id, servicecid, stime, etime, size);
     return data;
   }
  
