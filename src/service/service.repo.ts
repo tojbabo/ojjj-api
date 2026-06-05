@@ -156,6 +156,13 @@ export class ServiceRepo {
     return result2;
   }
 
+  /**
+   * 사용자의 서비스 총 이용량 조회
+   * @param userId 
+   * @param stime 
+   * @param etime 
+   * @returns 
+   */
   async getTotalUsage(userId: string, stime: string, etime: string):Promise<object[]>{
     const command = new QueryCommand({
       TableName: 'usage-api-service',
@@ -210,8 +217,6 @@ export class ServiceRepo {
     const result = await this.client.send(command);
     return result.Items ?? [];
   }
-
-
 
   /**
    * 토큰이 해당 서비스에서 발급이 됐는지 확인, 발급이 된 경우 소유한 사용자의 ID를 반환

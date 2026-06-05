@@ -87,5 +87,22 @@ export class ServiceController {
     return result;
   }
 
+  /**
+   * 사용자의 월별 사용량 조회
+   * @param body 
+   * @param auth 
+   * @returns 
+   */
+  @Post('/totalusage')
+  async getTotalUsage(@Headers('authorization') auth: string): Promise<any> {
+    logger.info(`api/user/totalusage - request total usage`);
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    const userid = await this.authService.ExtractIDFromToken(auth);
+    const usage = await this.servService.getMonthlyUsage(userid, year, month);
+    return { usage };
+  }
+
   
 }

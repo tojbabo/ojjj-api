@@ -42,6 +42,10 @@ export class ApiRepo {
     }
   }
 
+  /**
+   * 사용자의 서비스 이용 기록 업데이트 (업서트)
+   * @param record 
+   */
   private async upsertRecord(record: UsageRecord): Promise<void> {
     const command = new UpdateCommand({
       TableName: this.TABLE,
@@ -56,6 +60,13 @@ export class ApiRepo {
     await this.DBCLIENT.send(command);
   }
 
+  /**
+   * 지정된 시간 범위 내의 프로세스 사용 내역 조회
+   * @param stime 
+   * @param etime 
+   * @param size 
+   * @returns 
+   */
   async selectRangeProcs(stime:number, etime:number, size:number):Promise<object[]>{
     const command = new ScanCommand({
       TableName: this.TABLE_WINPROCS,
@@ -97,6 +108,15 @@ export class ApiRepo {
     return result2;
   }
 
+  /**
+   * 사용자의 서비스 이용 기록 조회
+   * @param id 
+   * @param service 
+   * @param stime 
+   * @param etime 
+   * @param size 
+   * @returns 
+   */
   async selectRangeUsage(id: string, service:number, stime:string, etime:string, size:number):Promise<object[]>{
     const command = new QueryCommand({
       TableName: this.TABLE,
@@ -112,5 +132,5 @@ export class ApiRepo {
 
     const result = await this.DBCLIENT.send(command);
     return result.Items ?? [];
-  }
+  }  
 }

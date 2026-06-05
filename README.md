@@ -1,29 +1,180 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+## 📖 프로젝트 소개
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+프로젝트 개요 작성
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+* 어떤 데이터를 제공하는 서비스인지
+* 왜 만들었는지
+* 어떤 사용자들이 사용하는지
+* 어떤 문제를 해결하는지
 
-## Description
+예시)
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+다양한 데이터를 API 형태로 제공하기 위한 백엔드 서버입니다.
+
+사용자 인증, API Key 관리, 데이터 조회, 사용량 집계 등의 기능을 제공하며 API 서비스 운영에 필요한 핵심 기능들을 구현하였습니다.
+
+<br>
+
+## 🏗 시스템 아키텍처
+
+아키텍처 이미지 삽입
+
+```text
+Client
+  ↓
+API Gateway
+  ↓
+Backend Server
+  ↓
+DynamoDB
+```
+
+<br>
+
+## 📂 파일 구조
+
+```text
+src
+ ├── auth
+ │   ├── controller
+ │   ├── service
+ │   ├── repository
+ │   └── dto
+ │
+ ├── api
+ │   ├── controller
+ │   ├── service
+ │   ├── repository
+ │   └── dto
+ │
+ ├── common
+ ├── config
+ ├── middleware
+ └── types
+```
+
+### 구조 설명
+
+* auth : 인증 및 인가 관련 기능
+* api : API 서비스 관련 기능
+* common : 공통 유틸리티
+* config : 환경 설정
+* middleware : 공통 처리 로직
+* types : 타입 정의
+
+<br>
+
+## 🚀 기술적 도전 및 주요 기능
+
+### 사용자 인증 및 권한 관리
+
+#### 문제
+
+인증되지 않은 사용자의 API 접근을 방지해야 함
+
+#### 해결
+
+JWT 기반 인증 및 권한 검증 기능 구현
+
+#### 결과
+
+안전한 API 접근 환경 제공
+
+---
+
+### API Key 발급 및 관리
+
+#### 문제
+
+외부 서비스에서 API를 안전하게 호출할 수 있어야 함
+
+#### 해결
+
+사용자별 API Key 발급 및 검증 기능 구현
+
+#### 결과
+
+API 사용 이력 추적 및 접근 제어 가능
+
+---
+
+### DynamoDB 데이터 모델 설계
+
+#### 문제
+
+다양한 형태의 데이터를 유연하게 저장할 수 있어야 함
+
+#### 해결
+
+Access Pattern 기반 DynamoDB 테이블 설계
+
+#### 결과
+
+확장 가능한 데이터 저장 구조 확보
+
+---
+
+### API 사용량 집계
+
+#### 문제
+
+사용자별 API 사용 현황을 확인할 수 있어야 함
+
+#### 해결
+
+호출 이력 저장 및 사용량 집계 기능 구현
+
+#### 결과
+
+API 사용 통계 및 모니터링 제공
+
+---
+
+### 예외 처리 및 공통 응답 구조
+
+#### 문제
+
+API마다 응답 형식이 달라질 경우 유지보수가 어려움
+
+#### 해결
+
+공통 응답 객체 및 전역 예외 처리 구조 적용
+
+#### 결과
+
+일관된 API 인터페이스 제공
+
+<br>
+
+## 📑 API 명세
+
+### 인증
+
+* 회원가입
+* 로그인
+* 토큰 재발급
+
+### API 서비스
+
+* API 목록 조회
+* API 상세 조회
+* API 호출
+* API 사용량 조회
+
+### 사용자
+
+* 사용자 정보 조회
+* API Key 관리
+
+<br>
+
+## 📈 성과
+
+* API 서비스 플랫폼 구축
+* 사용자 인증 및 API Key 기반 접근 제어 구현
+* DynamoDB 기반 데이터 저장 구조 설계
+* API 사용량 추적 및 모니터링 기능 구현
+
 
 ## Project setup
 
@@ -56,43 +207,3 @@ $ npm run test:e2e
 # test coverage
 $ npm run test:cov
 ```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
