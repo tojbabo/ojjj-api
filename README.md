@@ -201,6 +201,9 @@ $ npm run start:prod
 # unit tests
 $ npm run test
 
+# specific code test
+$ npm run test code.file.spec
+
 # e2e tests
 $ npm run test:e2e
 

@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand, QueryCommand, DeleteCommand, ScanCommand } from '@aws-sdk/lib-dynamodb';
 import {logger} from '../utils/logger';
+import { APILIST } from '../constants';
 
 // id, sk , pw, time, token
 // tt@nav, [auth, service#0], '' , 260404-2356 , '423423423'
@@ -183,14 +184,13 @@ export class ServiceRepo {
       return acc;
     }, {});
 
-    // 리스트로 변환
-    return Object.entries(grouped).map(([serviceId, count]) => ({
-      serviceId: Number(serviceId),
-      count,
+    return Object.values(APILIST).map((service) => ({
+      serviceId: service.id,
+      name: service.name,
+      count: grouped[String(service.id)] ?? 0,
     }));
-
   }
-
+  
   /**
    * 사용자의 서비스에 대한 사용 목록을 가져옴
    * @param id 
