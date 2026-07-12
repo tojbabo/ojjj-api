@@ -59,7 +59,7 @@ export class AuthController {
   async logout(@Res({ passthrough: true }) res: Response): Promise<any> {
     logger.info(`api/auth/logout - user logout`);
 
-    res.cookie('refreshToken', '', {
+    res.clearCookie('refreshToken', {
       httpOnly: true,
       path: "/",
       expires: new Date(0), 
